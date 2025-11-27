@@ -1,8 +1,6 @@
 @import "tailwindcss";
-@reference "tailwindcss";
-
-/* Mapbox GL CSS */
 @import 'mapbox-gl/dist/mapbox-gl.css';
+@reference "tailwindcss";
 
 @layer base {
   body {
