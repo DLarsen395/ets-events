@@ -1,16 +1,19 @@
 import { create } from 'zustand';
+import type { DataRangePreset } from '../services/tremor-api';
 
-// Days per second options - how many days of event time pass per real second
-export type PlaybackSpeed = 1 | 7 | 14 | 30 | 60 | 120 | 240 | 365;
+// Speed is now a number (days per second) - can be fractional for sub-day speeds
+export type PlaybackSpeed = number;
 
 // Compute fade duration based on speed: 2s at 1 day/s, scaling to 0.5s at 365 days/s
 // Using logarithmic scale for smooth transition
 export const getFadeOutDuration = (speed: PlaybackSpeed): number => {
   const minFade = 0.5;
   const maxFade = 2.0;
-  const logSpeed = Math.log(speed);
+  // Clamp speed to avoid log(0) or negative values
+  const clampedSpeed = Math.max(0.01, Math.min(speed, 365));
+  const logSpeed = Math.log(clampedSpeed);
   const logMax = Math.log(365);
-  const t = logSpeed / logMax; // 0 to 1
+  const t = Math.max(0, logSpeed / logMax); // 0 to 1
   return maxFade - t * (maxFade - minFade);
 };
 
@@ -26,6 +29,9 @@ interface PlaybackState {
   rangeStart: Date | null; // User-selected playback start (bracket slider)
   rangeEnd: Date | null;   // User-selected playback end (bracket slider)
   
+  // Data range
+  dataRangePreset: DataRangePreset;
+  
   // Display settings
   showAllEvents: boolean;  // toggle between playback mode and show-all mode
   
@@ -39,18 +45,20 @@ interface PlaybackState {
   setRangeStart: (time: Date) => void;
   setRangeEnd: (time: Date) => void;
   setShowAllEvents: (show: boolean) => void;
+  setDataRangePreset: (preset: DataRangePreset) => void;
   reset: () => void;
 }
 
 export const usePlaybackStore = create<PlaybackState>((set) => ({
   // Initial state
   isPlaying: false,
-  speed: 30, // Default: 30 days per second (1 mo/s)
+  speed: 1, // Default: 1 day per second (will be updated based on preset)
   currentTime: null,
   startTime: null,
   endTime: null,
   rangeStart: null,
   rangeEnd: null,
+  dataRangePreset: 'lastWeek', // Default to last week
   showAllEvents: true, // Start showing all events
   
   // Actions
@@ -78,6 +86,7 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
     currentTime: state.currentTime && state.currentTime > rangeEnd ? rangeEnd : state.currentTime
   })),
   setShowAllEvents: (showAllEvents) => set({ showAllEvents, isPlaying: false }),
+  setDataRangePreset: (dataRangePreset) => set({ dataRangePreset }),
   reset: () => set((state) => ({ 
     isPlaying: false, 
     currentTime: state.rangeStart || state.startTime

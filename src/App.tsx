@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
 import { SideControls } from './components/Controls/SideControls';
+import { DataRangeSelector } from './components/Controls/DataRangeSelector';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 
@@ -100,6 +101,7 @@ function App() {
       
       <main style={{ flex: 1, position: 'relative' }}>
         <MapContainer events={displayEvents} />
+        <DataRangeSelector />
         <PlaybackControls 
           currentTime={currentTime}
           startTime={startTime}

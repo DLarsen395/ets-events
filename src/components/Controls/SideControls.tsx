@@ -1,18 +1,11 @@
-import { usePlaybackStore, type PlaybackSpeed } from '../../stores/playbackStore';
-
-const SPEED_OPTIONS: { value: PlaybackSpeed; label: string }[] = [
-  { value: 1, label: '1 day/s' },
-  { value: 7, label: '1 wk/s' },
-  { value: 14, label: '2 wk/s' },
-  { value: 30, label: '1 mo/s' },
-  { value: 60, label: '2 mo/s' },
-  { value: 120, label: '4 mo/s' },
-  { value: 240, label: '8 mo/s' },
-  { value: 365, label: '12 mo/s' },
-];
+import { usePlaybackStore } from '../../stores/playbackStore';
+import { getSpeedOptionsForRange } from '../../services/tremor-api';
 
 export const SideControls: React.FC = () => {
-  const { showAllEvents, speed, setShowAllEvents, setSpeed } = usePlaybackStore();
+  const { showAllEvents, speed, dataRangePreset, setShowAllEvents, setSpeed } = usePlaybackStore();
+  
+  // Get speed options based on current data range preset
+  const speedOptions = getSpeedOptionsForRange(dataRangePreset);
 
   return (
     <div
@@ -92,7 +85,7 @@ export const SideControls: React.FC = () => {
           Speed
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {SPEED_OPTIONS.map((option) => (
+          {speedOptions.map((option) => (
             <button
               key={option.value}
               onClick={() => setSpeed(option.value)}
