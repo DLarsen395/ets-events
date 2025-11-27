@@ -20,7 +20,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/dark-v11',
       center: [-123.0, 47.0], // Pacific Northwest
       zoom: 6.5,
       pitch: 0,
