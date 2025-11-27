@@ -53,3 +53,27 @@ body {
 .animate-spin {
   animation: spin 1s linear infinite;
 }
+
+/* Dark popup styling for Mapbox */
+.dark-popup .mapboxgl-popup-content {
+  background-color: #1f2937;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  padding: 0;
+}
+
+.dark-popup .mapboxgl-popup-tip {
+  border-top-color: #1f2937;
+  border-bottom-color: #1f2937;
+}
+
+.dark-popup .mapboxgl-popup-close-button {
+  color: #9ca3af;
+  font-size: 18px;
+  padding: 4px 8px;
+}
+
+.dark-popup .mapboxgl-popup-close-button:hover {
+  color: #fff;
+  background-color: rgba(255,255,255,0.1);
+}

@@ -143,18 +143,18 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         const feature = e.features[0];
         const props = feature.properties as ETSEvent['properties'];
 
-        new mapboxgl.Popup()
+        new mapboxgl.Popup({ className: 'dark-popup' })
           .setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number])
           .setHTML(`
-            <div class="p-3">
-              <h3 class="font-bold text-lg mb-2">Event #${props.id}</h3>
-              <div class="space-y-1 text-sm">
-                <p><strong>Magnitude:</strong> ${props.magnitude}</p>
-                <p><strong>Depth:</strong> ${props.depth.toFixed(1)} km</p>
-                <p><strong>Energy:</strong> ${props.energy.toLocaleString()}</p>
-                <p><strong>Duration:</strong> ${props.duration}s</p>
-                <p><strong>Stations:</strong> ${props.num_stas}</p>
-                <p><strong>Time:</strong> ${new Date(props.time).toLocaleString()}</p>
+            <div style="padding: 12px; color: #f3f4f6;">
+              <h3 style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; color: #fff;">Event #${props.id}</h3>
+              <div style="font-size: 0.875rem; line-height: 1.6;">
+                <p><strong>Magnitude:</strong> ${props.magnitude ?? 'N/A'}</p>
+                <p><strong>Depth:</strong> ${props.depth?.toFixed(1) ?? 'N/A'} km</p>
+                <p><strong>Energy:</strong> ${props.energy?.toLocaleString() ?? 'N/A'}</p>
+                <p><strong>Duration:</strong> ${props.duration ?? 'N/A'}s</p>
+                <p><strong>Stations:</strong> ${props.num_stas ?? 'N/A'}</p>
+                <p><strong>Time:</strong> ${props.time ? new Date(props.time).toLocaleString() : 'N/A'}</p>
               </div>
             </div>
           `)
