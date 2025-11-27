@@ -106,14 +106,16 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
             0.4, 3,
             1.9, 10.5
           ],
+          // Depth-based color: shallow (25km) = light cyan, deep (45km) = dark purple
           'circle-color': [
             'interpolate',
             ['linear'],
-            ['coalesce', ['get', 'magnitude'], 0.5],
-            0.4, '#10B981',  // Green
-            0.7, '#F59E0B',  // Yellow
-            1.2, '#F97316',  // Orange
-            1.5, '#EF4444'   // Red
+            ['coalesce', ['get', 'depth'], 35],
+            25, '#67E8F9',  // Light cyan (shallow)
+            30, '#38BDF8',  // Sky blue
+            35, '#818CF8',  // Indigo
+            40, '#A855F7',  // Purple
+            45, '#7C3AED'   // Dark violet (deep)
           ],
           'circle-opacity': ['coalesce', ['get', 'opacity'], 0.8],
           'circle-stroke-width': 1,

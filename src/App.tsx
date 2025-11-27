@@ -3,6 +3,8 @@ import { MapContainer } from './components/Map/MapContainer';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
 import { SideControls } from './components/Controls/SideControls';
 import { DataRangeSelector } from './components/Controls/DataRangeSelector';
+import { Legend } from './components/Controls/Legend';
+import { EventStats } from './components/Controls/EventStats';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 
@@ -138,6 +140,12 @@ function App() {
         )}
         
         <DataRangeSelector isLoading={isLoading} />
+        <Legend />
+        <EventStats 
+          events={events}
+          visibleCount={displayEvents.length}
+          isPlaying={!showAllEvents}
+        />
         <PlaybackControls 
           currentTime={currentTime}
           startTime={startTime}
