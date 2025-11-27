@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
 import { SideControls } from './components/Controls/SideControls';
@@ -10,6 +10,12 @@ function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
   const [displayTime, setDisplayTime] = useState<Date | null>(null);
+  const hasLoadedOnce = useRef(false);
+  
+  // Track if we've loaded data at least once
+  if (events.length > 0 && !hasLoadedOnce.current) {
+    hasLoadedOnce.current = true;
+  }
 
   const handleFilteredEventsChange = useCallback((events: ETSEventWithOpacity[], currentTime: Date | null) => {
     setFilteredEvents(events);
@@ -57,7 +63,8 @@ function App() {
     );
   }
 
-  if (isLoading) {
+  // Show full-page loading only on initial load
+  if (isLoading && !hasLoadedOnce.current) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -101,7 +108,36 @@ function App() {
       
       <main style={{ flex: 1, position: 'relative' }}>
         <MapContainer events={displayEvents} />
-        <DataRangeSelector />
+        
+        {/* Loading overlay for data refresh */}
+        {isLoading && hasLoadedOnce.current && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(17, 24, 39, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50,
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div className="animate-spin" style={{ 
+                width: '3rem', 
+                height: '3rem', 
+                border: '3px solid transparent',
+                borderTopColor: '#3b82f6',
+                borderRadius: '50%',
+                margin: '0 auto 0.75rem'
+              }}></div>
+              <p style={{ fontSize: '1rem', color: '#9ca3af' }}>Loading events...</p>
+            </div>
+          </div>
+        )}
+        
+        <DataRangeSelector isLoading={isLoading} />
         <PlaybackControls 
           currentTime={currentTime}
           startTime={startTime}

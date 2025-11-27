@@ -4,11 +4,11 @@ import type { DataRangePreset } from '../services/tremor-api';
 // Speed is now a number (days per second) - can be fractional for sub-day speeds
 export type PlaybackSpeed = number;
 
-// Compute fade duration based on speed: 2s at 1 day/s, scaling to 0.5s at 365 days/s
+// Compute fade duration based on speed: 1.2s at 1 day/s, scaling to 0.3s at 365 days/s
 // Using logarithmic scale for smooth transition
 export const getFadeOutDuration = (speed: PlaybackSpeed): number => {
-  const minFade = 0.5;
-  const maxFade = 2.0;
+  const minFade = 0.3;
+  const maxFade = 1.2;
   // Clamp speed to avoid log(0) or negative values
   const clampedSpeed = Math.max(0.01, Math.min(speed, 365));
   const logSpeed = Math.log(clampedSpeed);
@@ -62,12 +62,31 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
   showAllEvents: true, // Start showing all events
   
   // Actions
-  play: () => set({ isPlaying: true, showAllEvents: false }),
+  play: () => set((state) => {
+    // If at end of range, restart from beginning
+    const effectiveEnd = state.rangeEnd || state.endTime;
+    const effectiveStart = state.rangeStart || state.startTime;
+    if (state.currentTime && effectiveEnd && effectiveStart && 
+        state.currentTime.getTime() >= effectiveEnd.getTime()) {
+      return { isPlaying: true, showAllEvents: false, currentTime: effectiveStart };
+    }
+    return { isPlaying: true, showAllEvents: false };
+  }),
   pause: () => set({ isPlaying: false }),
-  togglePlay: () => set((state) => ({ 
-    isPlaying: !state.isPlaying,
-    showAllEvents: state.isPlaying ? state.showAllEvents : false 
-  })),
+  togglePlay: () => set((state) => {
+    // If currently playing, just pause
+    if (state.isPlaying) {
+      return { isPlaying: false };
+    }
+    // If at end of range, restart from beginning
+    const effectiveEnd = state.rangeEnd || state.endTime;
+    const effectiveStart = state.rangeStart || state.startTime;
+    if (state.currentTime && effectiveEnd && effectiveStart && 
+        state.currentTime.getTime() >= effectiveEnd.getTime()) {
+      return { isPlaying: true, showAllEvents: false, currentTime: effectiveStart };
+    }
+    return { isPlaying: true, showAllEvents: false };
+  }),
   setSpeed: (speed) => set({ speed }),
   setCurrentTime: (currentTime) => set({ currentTime }),
   setTimeRange: (startTime, endTime) => set({ 

@@ -26,6 +26,12 @@ export const fetchTremorEvents = async (params: TremorAPIParams): Promise<ETSEve
 
   const response = await fetch(url.toString());
   
+  // 404 means no data for the time range - return empty collection
+  if (response.status === 404) {
+    console.log('No events found for the specified time range');
+    return { type: 'FeatureCollection', features: [] };
+  }
+  
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status} ${response.statusText}`);
   }
@@ -55,7 +61,8 @@ export const getPresetDateRange = (preset: DataRangePreset): { starttime: string
 
   switch (preset) {
     case 'lastDay':
-      startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      // Look back 48 hours since data is published around 7pm PST daily
+      startTime = new Date(now.getTime() - 48 * 60 * 60 * 1000);
       break;
     case 'lastWeek':
       startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { usePlaybackStore } from '../../stores/playbackStore';
 import type { DataRangePreset } from '../../services/tremor-api';
-import { getPresetDateRange } from '../../services/tremor-api';
+import { getPresetDateRange, setCustomDateRange } from '../../services/tremor-api';
+
+interface DataRangeSelectorProps {
+  isLoading?: boolean;
+}
 
 interface PresetOption {
   value: DataRangePreset;
@@ -9,14 +13,14 @@ interface PresetOption {
 }
 
 const presetOptions: PresetOption[] = [
-  { value: 'lastDay', label: 'Last 24 Hours' },
+  { value: 'lastDay', label: 'Last 48 Hours' },
   { value: 'lastWeek', label: 'Last Week' },
   { value: 'lastMonth', label: 'Last Month' },
   { value: 'lastYear', label: 'Last Year' },
   { value: 'custom', label: 'Custom Range' },
 ];
 
-export const DataRangeSelector: React.FC = () => {
+export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading = false }) => {
   const dataRangePreset = usePlaybackStore((state) => state.dataRangePreset);
   const setDataRangePreset = usePlaybackStore((state) => state.setDataRangePreset);
   const isPlaying = usePlaybackStore((state) => state.isPlaying);
@@ -45,8 +49,22 @@ export const DataRangeSelector: React.FC = () => {
 
   const handleCustomSubmit = () => {
     if (customStart && customEnd) {
-      // Store custom dates - the API will use them
-      // For now, just set the preset and close modal
+      // Validate dates
+      const startDate = new Date(customStart);
+      const endDate = new Date(customEnd);
+      
+      if (startDate >= endDate) {
+        alert('Start date must be before end date');
+        return;
+      }
+      
+      // Store custom dates in the API service
+      setCustomDateRange(
+        `${customStart}T00:00:00`,
+        `${customEnd}T23:59:59`
+      );
+      
+      // Trigger data reload by setting preset
       setDataRangePreset('custom');
       setShowCustomModal(false);
     }
@@ -72,31 +90,46 @@ export const DataRangeSelector: React.FC = () => {
         border: '1px solid rgba(255, 255, 255, 0.1)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
       }}>
-        <label style={{
-          display: 'block',
-          fontSize: '10px',
-          fontWeight: 500,
-          color: '#888',
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
           marginBottom: '4px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
         }}>
-          Data Range
-        </label>
+          <label style={{
+            fontSize: '10px',
+            fontWeight: 500,
+            color: '#888',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            Data Range
+          </label>
+          {isLoading && (
+            <div style={{
+              width: '12px',
+              height: '12px',
+              border: '2px solid transparent',
+              borderTopColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }} />
+          )}
+        </div>
         
         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxWidth: '300px' }}>
           {presetOptions.map(({ value, label }) => (
             <button
               key={value}
               onClick={() => handlePresetChange(value)}
-              disabled={isPlaying}
+              disabled={isPlaying || isLoading}
               style={{
                 padding: '6px 10px',
                 fontSize: '11px',
                 fontWeight: 500,
                 border: 'none',
                 borderRadius: '4px',
-                cursor: isPlaying ? 'not-allowed' : 'pointer',
+                cursor: (isPlaying || isLoading) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s ease',
                 background: dataRangePreset === value
                   ? 'rgba(59, 130, 246, 0.8)'

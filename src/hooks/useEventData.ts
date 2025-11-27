@@ -42,6 +42,10 @@ export const useEventData = () => {
           const minTime = new Date(Math.min(...times));
           const maxTime = new Date(Math.max(...times));
           setTimeRange(minTime, maxTime);
+        } else {
+          // No events - use the requested date range
+          const { starttime, endtime } = getPresetDateRange(dataRangePreset);
+          setTimeRange(new Date(starttime), new Date(endtime));
         }
         
       } catch (err) {
