@@ -25,6 +25,16 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
   
   const animationRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(0);
+  
+  // Use refs for values that change during animation to avoid effect restarts
+  const currentTimeRef = useRef(currentTime);
+  const endTimeRef = useRef(endTime);
+  const speedRef = useRef(speed);
+  
+  // Keep refs in sync
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { endTimeRef.current = endTime; }, [endTime]);
+  useEffect(() => { speedRef.current = speed; }, [speed]);
 
   // Initialize time range from events
   useEffect(() => {
@@ -50,7 +60,7 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
 
     const currentMs = currentTime.getTime();
     // Fade window: events visible from (currentTime - fadeOutDuration days) to currentTime
-    const fadeWindowMs = fadeOutDuration * 24 * 60 * 60 * 1000; // fadeOutDuration in days
+    const fadeWindowMs = fadeOutDuration * MS_PER_DAY;
     const windowStart = currentMs - fadeWindowMs;
 
     return events.filter(event => {
@@ -59,9 +69,9 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
     });
   }, [events, currentTime, fadeOutDuration, showAllEvents]);
 
-  // Animation loop
+  // Animation loop - only restart when isPlaying changes
   useEffect(() => {
-    if (!isPlaying || !currentTime || !endTime) {
+    if (!isPlaying) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
@@ -72,29 +82,37 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
     const animate = (timestamp: number) => {
       if (!lastTickRef.current) {
         lastTickRef.current = timestamp;
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      const currentT = currentTimeRef.current;
+      const endT = endTimeRef.current;
+      const spd = speedRef.current;
+
+      if (!currentT || !endT) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
       }
 
       const deltaMs = timestamp - lastTickRef.current;
       lastTickRef.current = timestamp;
 
       // Calculate time advancement
-      // speed = days per second, so:
-      // days advanced = (deltaMs / 1000) * speed
-      // ms advanced = days * MS_PER_DAY
+      // speed = days per second
       const secondsElapsed = deltaMs / 1000;
-      const daysAdvanced = secondsElapsed * speed;
+      const daysAdvanced = secondsElapsed * spd;
       const msAdvanced = daysAdvanced * MS_PER_DAY;
 
-      const newTime = new Date(currentTime.getTime() + msAdvanced);
+      const newTime = new Date(currentT.getTime() + msAdvanced);
 
-      if (newTime >= endTime) {
-        setCurrentTime(endTime);
+      if (newTime >= endT) {
+        setCurrentTime(endT);
         usePlaybackStore.getState().pause();
       } else {
         setCurrentTime(newTime);
+        animationRef.current = requestAnimationFrame(animate);
       }
-
-      animationRef.current = requestAnimationFrame(animate);
     };
 
     lastTickRef.current = 0;
@@ -103,9 +121,10 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
       }
     };
-  }, [isPlaying, currentTime, endTime, speed, setCurrentTime]);
+  }, [isPlaying, setCurrentTime]);
 
   // Update filtered events when playback state changes
   useEffect(() => {
