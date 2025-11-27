@@ -26,66 +26,55 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       return;
     }
 
-    console.log('Initializing map with container:', mapContainer.current);
-    console.log('Container dimensions:', mapContainer.current.offsetWidth, 'x', mapContainer.current.offsetHeight);
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (!mapContainer.current) return;
+      
+      console.log('Initializing map with container:', mapContainer.current);
+      console.log('Container dimensions:', mapContainer.current.offsetWidth, 'x', mapContainer.current.offsetHeight);
 
-    try {
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: {
-          version: 8,
-          sources: {
-            'osm': {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: '© OpenStreetMap'
-            }
-          },
-          layers: [{
-            id: 'osm',
-            type: 'raster',
-            source: 'osm'
-          }]
-        },
-        center: [-123.0, 47.0], // Pacific Northwest
-        zoom: 6.5,
-        pitch: 0,
-        bearing: 0,
-      });
+      try {
+        const mapInstance = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/dark-v11',
+          center: [-123.0, 47.0],
+          zoom: 6.5,
+        });
 
-      console.log('Map instance created');
+        map.current = mapInstance;
+        console.log('Map instance created, waiting for load...');
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        mapInstance.on('load', () => {
+          console.log('Map load event fired!');
+          setMapLoaded(true);
+        });
 
-      // Listen to all relevant events
-      map.current.on('load', () => {
-        console.log('Map load event fired!');
-        setMapLoaded(true);
-      });
+        mapInstance.on('style.load', () => {
+          console.log('Style loaded!');
+        });
 
-      map.current.on('style.load', () => {
-        console.log('Map style.load event fired!');
-      });
+        mapInstance.on('error', (e) => {
+          console.error('Mapbox error:', e);
+          setMapError(`Map error: ${e.error?.message || JSON.stringify(e)}`);
+        });
 
-      map.current.on('idle', () => {
-        console.log('Map idle event fired');
-      });
+        // Fallback: check if map is already loaded
+        if (mapInstance.loaded()) {
+          console.log('Map was already loaded!');
+          setMapLoaded(true);
+        }
 
-      // Handle errors
-      map.current.on('error', (e) => {
-        console.error('Mapbox error:', e);
-        setMapError(`Map error: ${e.error?.message || 'Unknown error'}`);
-      });
+        // Add controls after map is ready
+        mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    } catch (err) {
-      console.error('Failed to initialize map:', err);
-      setMapError(`Failed to initialize map: ${err}`);
-    }
+      } catch (err) {
+        console.error('Failed to initialize map:', err);
+        setMapError(`Failed to initialize map: ${err}`);
+      }
+    }, 100);
 
-    // Cleanup on unmount
     return () => {
+      clearTimeout(timer);
       map.current?.remove();
     };
   }, []);
