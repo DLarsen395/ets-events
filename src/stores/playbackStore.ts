@@ -3,6 +3,17 @@ import { create } from 'zustand';
 // Days per second options - how many days of event time pass per real second
 export type PlaybackSpeed = 1 | 7 | 30 | 60 | 90 | 180 | 365;
 
+// Compute fade duration based on speed: 2s at 1 day/s, scaling to 0.5s at 365 days/s
+// Using logarithmic scale for smooth transition
+export const getFadeOutDuration = (speed: PlaybackSpeed): number => {
+  const minFade = 0.5;
+  const maxFade = 2.0;
+  const logSpeed = Math.log(speed);
+  const logMax = Math.log(365);
+  const t = logSpeed / logMax; // 0 to 1
+  return maxFade - t * (maxFade - minFade);
+};
+
 interface PlaybackState {
   // Playback controls
   isPlaying: boolean;
@@ -16,7 +27,6 @@ interface PlaybackState {
   rangeEnd: Date | null;   // User-selected playback end (bracket slider)
   
   // Display settings
-  fadeOutDuration: number; // seconds of real-time fade
   showAllEvents: boolean;  // toggle between playback mode and show-all mode
   
   // Actions
@@ -28,7 +38,6 @@ interface PlaybackState {
   setTimeRange: (start: Date, end: Date) => void;
   setRangeStart: (time: Date) => void;
   setRangeEnd: (time: Date) => void;
-  setFadeOutDuration: (duration: number) => void;
   setShowAllEvents: (show: boolean) => void;
   reset: () => void;
 }
@@ -42,7 +51,6 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
   endTime: null,
   rangeStart: null,
   rangeEnd: null,
-  fadeOutDuration: 2, // 2 seconds real-time fade
   showAllEvents: true, // Start showing all events
   
   // Actions
@@ -69,11 +77,10 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
     rangeEnd,
     currentTime: state.currentTime && state.currentTime > rangeEnd ? rangeEnd : state.currentTime
   })),
-  setFadeOutDuration: (fadeOutDuration) => set({ fadeOutDuration }),
   setShowAllEvents: (showAllEvents) => set({ showAllEvents, isPlaying: false }),
   reset: () => set((state) => ({ 
     isPlaying: false, 
-    currentTime: state.rangeStart || state.startTime,
-    showAllEvents: true
+    currentTime: state.rangeStart || state.startTime
+    // Keep showAllEvents unchanged - just reset playhead
   })),
 }));

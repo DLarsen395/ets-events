@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useState } from 'react';
 import { usePlaybackStore } from '../../stores/playbackStore';
 
 interface PlaybackControlsProps {
@@ -10,6 +10,138 @@ interface PlaybackControlsProps {
   eventCount: number;
   totalEvents: number;
 }
+
+// Date picker modal component
+const DatePickerModal: React.FC<{
+  isOpen: boolean;
+  title: string;
+  currentDate: Date | null;
+  minDate: Date | null;
+  maxDate: Date | null;
+  onSave: (date: Date) => void;
+  onClose: () => void;
+}> = ({ isOpen, title, currentDate, minDate, maxDate, onSave, onClose }) => {
+  const [inputValue, setInputValue] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen && currentDate) {
+      // Format as YYYY-MM-DD for the date input
+      setInputValue(currentDate.toISOString().split('T')[0]);
+      setError(null);
+    }
+  }, [isOpen, currentDate]);
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    const parsed = new Date(inputValue);
+    if (isNaN(parsed.getTime())) {
+      setError('Invalid date format');
+      return;
+    }
+    
+    if (minDate && parsed < minDate) {
+      setError(`Date must be after ${minDate.toLocaleDateString()}`);
+      return;
+    }
+    
+    if (maxDate && parsed > maxDate) {
+      setError(`Date must be before ${maxDate.toLocaleDateString()}`);
+      return;
+    }
+    
+    onSave(parsed);
+    onClose();
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          backgroundColor: 'rgba(31, 41, 55, 0.98)',
+          borderRadius: '12px',
+          padding: '20px',
+          minWidth: '280px',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(75, 85, 99, 0.3)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 style={{ color: '#fff', marginTop: 0, marginBottom: '16px', fontSize: '1rem' }}>
+          {title}
+        </h3>
+        
+        <input
+          type="date"
+          value={inputValue}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            setError(null);
+          }}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: 'rgba(55, 65, 81, 0.8)',
+            border: error ? '1px solid #ef4444' : '1px solid rgba(75, 85, 99, 0.5)',
+            borderRadius: '6px',
+            color: '#fff',
+            fontSize: '0.9rem',
+            boxSizing: 'border-box',
+          }}
+        />
+        
+        {error && (
+          <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '8px' }}>
+            {error}
+          </div>
+        )}
+        
+        <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'rgba(75, 85, 99, 0.5)',
+              border: 'none',
+              borderRadius: '6px',
+              color: '#9ca3af',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#3b82f6',
+              border: 'none',
+              borderRadius: '6px',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+            }}
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   currentTime,
@@ -32,6 +164,9 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   } = usePlaybackStore();
 
   const progressBarRef = useRef<HTMLDivElement>(null);
+  
+  // Date picker state
+  const [datePickerOpen, setDatePickerOpen] = useState<'start' | 'end' | null>(null);
 
   const formatDate = (date: Date | null) => {
     if (!date) return '--';
@@ -397,7 +532,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         />
           </div>
 
-          {/* Date range labels */}
+          {/* Date range labels - clickable */}
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between',
@@ -405,14 +540,74 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             color: '#6b7280',
             marginTop: '4px',
           }}>
-            <span>{formatDate(rangeStart || startTime)}</span>
+            <span 
+              onClick={() => setDatePickerOpen('start')}
+              style={{ 
+                cursor: 'pointer', 
+                padding: '2px 4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                e.currentTarget.style.color = '#3b82f6';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#6b7280';
+              }}
+              title="Click to set start date"
+            >
+              {formatDate(rangeStart || startTime)}
+            </span>
             <span style={{ color: '#9ca3af' }}>
               {formatDate(startTime)} → {formatDate(endTime)}
             </span>
-            <span>{formatDate(rangeEnd || endTime)}</span>
+            <span 
+              onClick={() => setDatePickerOpen('end')}
+              style={{ 
+                cursor: 'pointer', 
+                padding: '2px 4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                e.currentTarget.style.color = '#3b82f6';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#6b7280';
+              }}
+              title="Click to set end date"
+            >
+              {formatDate(rangeEnd || endTime)}
+            </span>
           </div>
         </div>
       </div>
+      
+      {/* Date picker modal for start date */}
+      <DatePickerModal
+        isOpen={datePickerOpen === 'start'}
+        title="Set Range Start Date"
+        currentDate={rangeStart || startTime}
+        minDate={startTime}
+        maxDate={rangeEnd || endTime}
+        onSave={(date) => setRangeStart(date)}
+        onClose={() => setDatePickerOpen(null)}
+      />
+      
+      {/* Date picker modal for end date */}
+      <DatePickerModal
+        isOpen={datePickerOpen === 'end'}
+        title="Set Range End Date"
+        currentDate={rangeEnd || endTime}
+        minDate={rangeStart || startTime}
+        maxDate={endTime}
+        onSave={(date) => setRangeEnd(date)}
+        onClose={() => setDatePickerOpen(null)}
+      />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { usePlaybackStore } from '../stores/playbackStore';
+import { usePlaybackStore, getFadeOutDuration } from '../stores/playbackStore';
 import type { ETSEvent } from '../types/event';
 
 // Milliseconds per day
@@ -24,11 +24,13 @@ export const usePlayback = ({ events, onFilteredEventsChange }: UsePlaybackProps
     endTime,
     rangeStart,
     rangeEnd,
-    fadeOutDuration, // seconds of real-time fade
     showAllEvents,
     setCurrentTime, 
     setTimeRange 
   } = usePlaybackStore();
+  
+  // Get dynamic fade duration based on current speed
+  const fadeOutDuration = getFadeOutDuration(speed);
   
   const animationRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(0);
