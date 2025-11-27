@@ -26,6 +26,9 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       return;
     }
 
+    console.log('Initializing map with container:', mapContainer.current);
+    console.log('Container dimensions:', mapContainer.current.offsetWidth, 'x', mapContainer.current.offsetHeight);
+
     try {
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
@@ -36,13 +39,23 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         bearing: 0,
       });
 
+      console.log('Map instance created');
+
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Set map loaded state
+      // Listen to all relevant events
       map.current.on('load', () => {
-        console.log('Map loaded successfully!');
+        console.log('Map load event fired!');
         setMapLoaded(true);
+      });
+
+      map.current.on('style.load', () => {
+        console.log('Map style.load event fired!');
+      });
+
+      map.current.on('idle', () => {
+        console.log('Map idle event fired');
       });
 
       // Handle errors
