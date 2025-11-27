@@ -1,8 +1,27 @@
+import { useState, useCallback } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
+import { PlaybackControls } from './components/Controls/PlaybackControls';
 import { useEventData } from './hooks/useEventData';
+import { usePlayback } from './hooks/usePlayback';
+import type { ETSEvent } from './types/event';
 
 function App() {
   const { events, isLoading, error } = useEventData();
+  const [filteredEvents, setFilteredEvents] = useState<ETSEvent[]>([]);
+  const [displayTime, setDisplayTime] = useState<Date | null>(null);
+
+  const handleFilteredEventsChange = useCallback((events: ETSEvent[], currentTime: Date | null) => {
+    setFilteredEvents(events);
+    setDisplayTime(currentTime);
+  }, []);
+
+  const { currentTime, startTime, endTime, showAllEvents } = usePlayback({ 
+    events, 
+    onFilteredEventsChange: handleFilteredEventsChange 
+  });
+
+  // Use all events or filtered events based on mode
+  const displayEvents = showAllEvents ? events : filteredEvents;
 
   if (error) {
     return (
@@ -80,7 +99,14 @@ function App() {
       </header>
       
       <main style={{ flex: 1, position: 'relative' }}>
-        <MapContainer events={events} />
+        <MapContainer events={displayEvents} />
+        <PlaybackControls 
+          currentTime={currentTime}
+          startTime={startTime}
+          endTime={endTime}
+          eventCount={displayEvents.length}
+          totalEvents={events.length}
+        />
       </main>
     </div>
   );
