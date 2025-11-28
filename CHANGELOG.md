@@ -5,6 +5,32 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-01-28
+
+### Fixed
+- **React Hooks Violations** - Fixed refs being accessed during render in App.tsx
+- **Unused Variables** - Removed unused `_currentTime` parameter
+- **setState in Effects** - Refactored to use derived state instead of effect-based state updates
+- **MapContainer Token Check** - Moved from effect to useMemo for proper React patterns
+
+### Security
+- **Nginx Headers** - Added `Referrer-Policy` and `Permissions-Policy` security headers
+- **Runtime Token Injection** - Mapbox token now injected at container startup via environment variable, not bundled in JS build
+
+### Added
+- **docker-entrypoint.sh** - Entrypoint script for runtime token injection
+- **Runtime Config Support** - `public/config.js` for runtime configuration
+
+### Changed
+- **Dockerfile** - No longer requires build-time token argument
+- **docker-compose.ets-events.yml** - Now includes `MAPBOX_TOKEN` environment variable
+- **Simplified Callback Interface** - `onFilteredEventsChange` no longer passes unused `currentTime`
+
+### Documentation
+- Updated README and DOCKER_DEPLOYMENT.md with runtime token instructions
+
+---
+
 ## [1.0.0] - 2025-11-27
 
 ### 🎉 Initial Production Release

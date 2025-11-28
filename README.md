@@ -187,13 +187,15 @@ Outputs optimized static files to `dist/` directory.
 
 ### Docker Deployment
 
+The Docker image uses **runtime token injection** - the Mapbox token is NOT bundled into the build. Instead, it's injected when the container starts via environment variable.
+
 #### Quick Start (Local Testing)
 ```bash
-# Build the image
-docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token" .
+# Build the image (no token needed at build time)
+docker build -t ets-events:latest .
 
-# Run locally
-docker run -d -p 8080:80 --name ets-events-test ets-events:latest
+# Run locally with your Mapbox token
+docker run -d -p 8080:80 -e MAPBOX_TOKEN=your_token_here --name ets-events-test ets-events:latest
 
 # Test at http://localhost:8080
 ```
@@ -223,6 +225,8 @@ version: "3.8"
 services:
   ets-events:
     image: ghcr.io/dlarsen395/ets-events:latest
+    environment:
+      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
     networks:
       - npm-proxy
     deploy:
@@ -235,7 +239,11 @@ networks:
     external: true
 ```
 
-3. **Configure Nginx Proxy Manager**:
+3. **Add Environment Variable** in Portainer:
+   - Under "Environment variables" section
+   - Add: `MAPBOX_TOKEN` = `your_mapbox_token_here`
+
+4. **Configure Nginx Proxy Manager**:
    - Forward Hostname: `ets-events_ets-events`
    - Forward Port: `80`
    - Attach Access List for authentication

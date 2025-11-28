@@ -3,9 +3,21 @@ import mapboxgl from 'mapbox-gl';
 import type { ETSEvent } from '../../types/event';
 import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
 
-// Set Mapbox access token
-const token = import.meta.env.VITE_MAPBOX_TOKEN;
-mapboxgl.accessToken = token;
+// Get Mapbox token from runtime config (Docker) or env var (development)
+const getMapboxToken = (): string | undefined => {
+  // Runtime config (injected by Docker at startup)
+  if (window.__RUNTIME_CONFIG__?.MAPBOX_TOKEN && 
+      window.__RUNTIME_CONFIG__.MAPBOX_TOKEN !== '__MAPBOX_TOKEN_PLACEHOLDER__') {
+    return window.__RUNTIME_CONFIG__.MAPBOX_TOKEN;
+  }
+  // Fallback to build-time env var (development)
+  return import.meta.env.VITE_MAPBOX_TOKEN;
+};
+
+const token = getMapboxToken();
+if (token) {
+  mapboxgl.accessToken = token;
+}
 
 interface MapContainerProps {
   events: ETSEventWithOpacity[];

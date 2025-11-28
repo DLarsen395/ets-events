@@ -7,11 +7,19 @@ This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL
 **Production URL**: https://ets.home.hushrush.com  
 **Container Image**: `ghcr.io/dlarsen395/ets-events:latest`
 
+## Security: Runtime Token Injection
+
+The Mapbox token is **NOT bundled into the Docker image**. Instead, it's injected at container startup via the `MAPBOX_TOKEN` environment variable. This means:
+
+- ✅ The image can be shared publicly without exposing your token
+- ✅ Different environments can use different tokens
+- ✅ Token rotation doesn't require rebuilding the image
+
 ## Prerequisites
 
 - Docker Swarm initialized
 - Nginx Proxy Manager running on `npm-proxy` network
-- `.env` file with `VITE_MAPBOX_TOKEN`
+- Mapbox API token (for runtime injection)
 - GitHub PAT with `write:packages` and `read:packages` scopes
 
 ## Quick Start
@@ -19,15 +27,15 @@ This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL
 ### 1. Build the Docker Image
 
 ```bash
-# Load Mapbox token from .env and build
-docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token_here" .
+# Build the image (no token needed at build time!)
+docker build -t ets-events:latest .
 ```
 
 ### 2. Test Locally (Optional)
 
 ```bash
-# Run container locally
-docker run -d -p 8080:80 --name ets-events-test ets-events:latest
+# Run container locally with your token
+docker run -d -p 8080:80 -e MAPBOX_TOKEN=your_token_here --name ets-events-test ets-events:latest
 
 # Test at http://localhost:8080
 
@@ -67,6 +75,8 @@ version: "3.8"
 services:
   ets-events:
     image: ghcr.io/dlarsen395/ets-events:latest
+    environment:
+      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
     networks:
       - npm-proxy
     deploy:
@@ -79,7 +89,11 @@ networks:
     external: true
 ```
 
-3. **Deploy the stack**
+3. **Add Environment Variable**:
+   - Scroll to "Environment variables" section
+   - Add: `MAPBOX_TOKEN` = `pk.eyJ1...` (your full Mapbox token)
+
+4. **Deploy the stack**
 
 ### 5. Configure Nginx Proxy Manager
 
