@@ -2,109 +2,155 @@
 
 ## Overview
 
-This application is deployed using Docker Swarm on the same node as your Nginx Proxy Manager (HawkerTre). Authentication is handled by NPM's Access Lists feature - **no auth configuration needed in the app container**.
+This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL termination and authentication. The container image is hosted on GitHub Container Registry (GHCR).
+
+**Production URL**: https://ets.home.hushrush.com  
+**Container Image**: `ghcr.io/dlarsen395/ets-events:latest`
 
 ## Prerequisites
 
 - Docker Swarm initialized
-- Nginx Proxy Manager running (your existing setup)
+- Nginx Proxy Manager running on `npm-proxy` network
 - `.env` file with `VITE_MAPBOX_TOKEN`
+- GitHub PAT with `write:packages` and `read:packages` scopes
 
 ## Quick Start
 
-### 1. Deploy the Application
+### 1. Build the Docker Image
 
-**PowerShell (Windows):**
-```powershell
-.\deploy.ps1
-```
-
-**Bash (Linux/WSL):**
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+# Load Mapbox token from .env and build
+docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token_here" .
 ```
 
-**Manual Deployment:**
+### 2. Test Locally (Optional)
+
 ```bash
-# Build image
-docker build --build-arg VITE_MAPBOX_TOKEN=your_token -t ets-events:latest .
+# Run container locally
+docker run -d -p 8080:80 --name ets-events-test ets-events:latest
 
-# Deploy stack
-docker stack deploy -c docker-compose.ets-events.yml ets
+# Test at http://localhost:8080
+
+# Clean up
+docker stop ets-events-test && docker rm ets-events-test
 ```
 
-### 2. Configure Nginx Proxy Manager
+### 3. Push to GitHub Container Registry
 
-1. **Open NPM Dashboard**: http://your-server:81
-2. **Create Access List** (one-time setup):
-   - Go to **Access Lists**
-   - Click **Add Access List**
-   - Name: "ETS Events Access"
-   - **Authorization** tab:
-     - Username: `your-username`
-     - Password: `your-password`
-     - Click **Add** for each user
+```bash
+# Login to GHCR (use lowercase username)
+echo YOUR_PAT | docker login ghcr.io -u yourusername --password-stdin
+
+# Tag for GHCR (must be lowercase)
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+
+# Push
+docker push ghcr.io/dlarsen395/ets-events:latest
+```
+
+### 4. Deploy to Docker Swarm (Portainer)
+
+1. **Add GHCR Registry** (one-time):
+   - Registries → Add registry → Custom
+   - URL: `ghcr.io`
+   - Username: `DLarsen395`
+   - Password: Your GitHub PAT
+
+2. **Create Stack**:
+   - Stacks → Add stack
+   - Name: `ets-events`
+   - Paste this compose:
+
+```yaml
+version: "3.8"
+
+services:
+  ets-events:
+    image: ghcr.io/dlarsen395/ets-events:latest
+    networks:
+      - npm-proxy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+networks:
+  npm-proxy:
+    external: true
+```
+
+3. **Deploy the stack**
+
+### 5. Configure Nginx Proxy Manager
+
+1. **Create Access List** (one-time setup):
+   - Go to **Access Lists** → **Add Access List**
+   - Name: `ETS Events Access`
+   - **Authorization** tab: Add username/password for each user
    - **Save**
 
-3. **Add Proxy Host**:
-   - Go to **Hosts** → **Proxy Hosts**
-   - Click **Add Proxy Host**
+2. **Add Proxy Host**:
    - **Details** tab:
-     - Domain Names: `ets.yourdomain.com` (or your domain)
+     - Domain Names: `ets.home.hushrush.com`, `ets.hushrush.com`
      - Scheme: `http`
-     - Forward Hostname: `ets_ets-events` (Docker service name)
+     - Forward Hostname: `ets-events_ets-events`
      - Forward Port: `80`
-     - Cache Assets: ✅ (optional)
      - Block Common Exploits: ✅
-     - Websockets Support: ❌ (not needed)
    - **SSL** tab:
-     - SSL Certificate: Request new with Let's Encrypt
+     - Select your wildcard certificate
      - Force SSL: ✅
-     - Email: your-email@domain.com
-   - **Advanced** tab (leave empty - no custom config needed)
-   - **Access List** dropdown:
-     - Select "ETS Events Access"
+     - HTTP/2 Support: ✅
+   - **Access List**: Select `ETS Events Access`
    - **Save**
 
-4. **Done!** Visit https://ets.yourdomain.com
-   - Browser will prompt for username/password
-   - Credentials managed in NPM Access List
+3. **Done!** Visit https://ets.home.hushrush.com
+
+## Updating the Application
+
+### Full Update Process
+
+```powershell
+# 1. Build new image
+docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token" .
+
+# 2. Tag for GHCR
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+
+# 3. Push to GHCR
+docker push ghcr.io/dlarsen395/ets-events:latest
+
+# 4. In Portainer: Update service with "Pull latest image" checked
+```
+
+### Quick Update via Portainer
+
+1. Go to **Stacks** → **ets-events**
+2. Click on the service
+3. Click **Update**
+4. Check **Pull latest image**
+5. **Update**
 
 ## Service Management
 
 ### View Service Status
 ```bash
-docker service ps ets_ets-events
+docker service ps ets-events_ets-events
+docker service ls | grep ets
 ```
 
 ### View Logs
 ```bash
-docker service logs -f ets_ets-events
-```
-
-### Update Application
-After making code changes:
-
-```bash
-# Rebuild and update
-docker build --build-arg VITE_MAPBOX_TOKEN=your_token -t ets-events:latest .
-docker service update --force ets_ets-events
-```
-
-Or use the deployment script:
-```powershell
-.\deploy.ps1
+docker service logs -f ets-events_ets-events
 ```
 
 ### Scale Service (optional)
 ```bash
-docker service scale ets_ets-events=2
+docker service scale ets-events_ets-events=2
 ```
 
 ### Remove Service
 ```bash
-docker stack rm ets
+docker stack rm ets-events
 ```
 
 ## User Management

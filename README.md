@@ -3,9 +3,11 @@
 An interactive web application for visualizing Pacific Northwest ETS (Episodic Tremor and Slip) seismic events with real-time playback, live data integration, and mobile-responsive design.
 
 ![ETS Events Map](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Version](https://img.shields.io/badge/Version-1.0.0-blue)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
 ## 🌟 Features
 
@@ -183,19 +185,66 @@ npm run build
 
 Outputs optimized static files to `dist/` directory.
 
-### Docker (Coming Soon)
+### Docker Deployment
 
+#### Quick Start (Local Testing)
 ```bash
-# Build image
-docker build -t ets-events .
+# Build the image
+docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token" .
 
-# Run container
-docker run -p 8080:80 -e VITE_MAPBOX_TOKEN=your_token ets-events
+# Run locally
+docker run -d -p 8080:80 --name ets-events-test ets-events:latest
+
+# Test at http://localhost:8080
 ```
+
+#### Push to GitHub Container Registry
+```bash
+# Login to GHCR (use a PAT with write:packages scope)
+echo $PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+
+# Tag and push
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+docker push ghcr.io/dlarsen395/ets-events:latest
+```
+
+#### Deploy to Docker Swarm (Portainer)
+
+1. **Add Registry** in Portainer:
+   - Registries → Add registry → Custom
+   - URL: `ghcr.io`
+   - Username: Your GitHub username
+   - Password: Your PAT
+
+2. **Create Stack** with this compose:
+```yaml
+version: "3.8"
+
+services:
+  ets-events:
+    image: ghcr.io/dlarsen395/ets-events:latest
+    networks:
+      - npm-proxy
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+networks:
+  npm-proxy:
+    external: true
+```
+
+3. **Configure Nginx Proxy Manager**:
+   - Forward Hostname: `ets-events_ets-events`
+   - Forward Port: `80`
+   - Attach Access List for authentication
+
+See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 
 ## 🗺️ Roadmap
 
-### ✅ Completed (V1)
+### ✅ Completed (V1.0.0)
 - [x] Live PNSN API integration
 - [x] Temporal playback engine
 - [x] Custom time range selection
@@ -204,14 +253,20 @@ docker run -p 8080:80 -e VITE_MAPBOX_TOKEN=your_token ets-events
 - [x] Mobile responsive design
 - [x] Timeline scrubbing with range brackets
 - [x] Loading states and error handling
+- [x] Docker deployment with GHCR
+- [x] Nginx Proxy Manager integration
+- [x] SSL and authentication support
 
-### 🔜 Next (V2)
-- [ ] Docker deployment configuration
+### 🔜 Next (V1.1.0)
 - [ ] User-selectable color schemes
-- [ ] Event clustering at low zoom levels
 - [ ] Keyboard shortcuts
+- [ ] Event details popup on click
+
+### 🔮 Future (V2.0.0)
+- [ ] Event clustering at low zoom levels
 - [ ] URL state persistence
 - [ ] Export/share functionality
+- [ ] Screenshot and CSV export
 
 ## 🐛 Troubleshooting
 

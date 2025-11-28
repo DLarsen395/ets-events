@@ -2,32 +2,19 @@ version: '3.8'
 
 services:
   ets-events:
-    image: ets-events:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        VITE_MAPBOX_TOKEN: ${VITE_MAPBOX_TOKEN}
-    restart: unless-stopped
+    image: ghcr.io/dlarsen395/ets-events:latest
     deploy:
-      placement:
-        constraints:
-          - node.hostname==HawkerTre  # Same node as NPM
       replicas: 1
+      restart_policy:
+        condition: any
       update_config:
         parallelism: 1
         delay: 10s
         order: start-first
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
     networks:
       - npm-proxy
-    # No port exposure needed - NPM will proxy to it
-    # Internal container port 80 accessible via service name
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -39,19 +26,19 @@ networks:
 
 # DEPLOYMENT NOTES:
 # 
-# 1. Build and deploy:
-#    docker stack deploy -c docker-compose.ets-events.yml ets
+# This is the production compose file for Docker Swarm deployment.
+# The image is pulled from GitHub Container Registry.
 #
-# 2. In Nginx Proxy Manager dashboard:
-#    - Add Proxy Host
-#    - Domain: ets.yourdomain.com
-#    - Forward Hostname: ets-events (service name)
-#    - Forward Port: 80
-#    - Enable SSL with Let's Encrypt
-#    - Add Access List for authentication
+# Deploy via Portainer:
+#   1. Stacks → Add stack → paste this file
+#   2. Stack name: ets-events
+#   3. Deploy
 #
-# 3. Update application:
-#    docker service update --force ets_ets-events
+# Or via CLI:
+#   docker stack deploy -c docker-compose.ets-events.yml ets-events
 #
-# 4. View logs:
-#    docker service logs -f ets_ets-events
+# Update:
+#   docker service update --image ghcr.io/dlarsen395/ets-events:latest ets-events_ets-events
+#
+# Logs:
+#   docker service logs -f ets-events_ets-events

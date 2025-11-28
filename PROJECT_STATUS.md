@@ -1,14 +1,18 @@
 # ETS Events Visualization - Project Status
 
-**Last Updated**: November 27, 2025
+**Last Updated**: November 27, 2025  
+**Version**: 1.0.0
 
-## 📊 Current Status: V1 Complete, Docker Pending
+## 📊 Current Status: V1.0.0 Released ✅
 
-### ✅ Phase 1-4: COMPLETE (100%)
-All core features implemented, tested, and working in production.
+All core features implemented, tested, and deployed to production.
 
-### ⏳ Phase 5: Docker Deployment (0%)
-Planned but not yet started.
+### ✅ All Phases Complete (100%)
+- Phase 1: Core Visualization ✅
+- Phase 2: Playback Engine ✅
+- Phase 3: UI Components ✅
+- Phase 4: Mobile Support ✅
+- Phase 5: Docker Deployment ✅
 
 ---
 
@@ -49,7 +53,10 @@ Planned but not yet started.
 | **Deployment** | | |
 | Development Build | ✅ Complete | npm run dev |
 | Production Build | ✅ Complete | npm run build |
-| Docker Setup | ⏳ Pending | Not started |
+| Docker Image | ✅ Complete | Multi-stage build |
+| GHCR Push | ✅ Complete | ghcr.io/dlarsen395/ets-events |
+| Swarm Deployment | ✅ Complete | Via Portainer |
+| NPM Integration | ✅ Complete | SSL + Auth |
 
 ---
 
@@ -63,11 +70,9 @@ Planned but not yet started.
 - ✅ Zustand 5.0.2
 - ✅ Tailwind CSS 3.4.1
 - ✅ PNSN Tremor API integration
-
-### Pending
-- ⏳ Docker
-- ⏳ Nginx
-- ⏳ Docker Compose
+- ✅ Docker (multi-stage build)
+- ✅ Nginx Alpine
+- ✅ GitHub Container Registry
 
 ---
 
@@ -127,40 +132,38 @@ No blocking issues
 
 ## Next Steps
 
-### Immediate (Phase 5)
-1. **Docker Implementation** (~4 hours)
-   - [ ] Create `Dockerfile` (multi-stage build)
-   - [ ] Create `docker-compose.yml`
-   - [ ] Configure Nginx for SPA routing
-   - [ ] Add environment variable handling
-   - [ ] Test local deployment
-   - [ ] Document deployment process
-
-### Short-term Enhancements (Post-V1)
-2. **User-Selectable Colors** (~2 hours)
+### Short-term Enhancements (V1.1.0)
+1. **User-Selectable Colors** (~2 hours)
    - [ ] Add color scheme picker
    - [ ] Implement theme presets (ocean, fire, earth)
    - [ ] Persist selection to localStorage
    - [ ] Update legend dynamically
 
-3. **Keyboard Shortcuts** (~1 hour)
+2. **Keyboard Shortcuts** (~1 hour)
    - [ ] Space = play/pause
    - [ ] Left/Right arrows = scrub timeline
    - [ ] +/- = speed adjustment
    - [ ] Add help modal
 
-### Medium-term Features (V2)
-4. **Event Clustering** (~8 hours)
+### Medium-term Features (V2.0.0)
+3. **Event Clustering** (~8 hours)
    - [ ] Implement clustering at low zoom
    - [ ] Show cluster counts
    - [ ] Expand on click
    - [ ] Performance optimization
 
-5. **Export/Share** (~4 hours)
+4. **Export/Share** (~4 hours)
    - [ ] Screenshot export
    - [ ] Data CSV export
    - [ ] Shareable URL with state
    - [ ] Embed code generation
+
+### Maintenance
+5. **Security Audit** (~2 hours)
+   - [ ] Review dependencies for vulnerabilities
+   - [ ] Check for exposed secrets
+   - [ ] Validate API error handling
+   - [ ] Review TypeScript strict mode compliance
 
 ---
 
@@ -208,37 +211,37 @@ No blocking issues
 ## Deployment Status
 
 ### Development
-- **Status**: ✅ Running
+- **Status**: ✅ Available
 - **URL**: http://localhost:5173
-- **Environment**: WSL2
-- **Hot Reload**: Enabled
+- **Command**: `npm run dev`
 
-### Production
-- **Status**: ⏳ Build Ready
-- **Command**: `npm run build`
-- **Output**: `dist/` directory
-- **Deployment**: Not configured
+### Production (Docker Swarm)
+- **Status**: ✅ Deployed
+- **URL**: https://ets.home.hushrush.com
+- **Image**: `ghcr.io/dlarsen395/ets-events:latest`
+- **Stack**: `ets-events`
+- **Auth**: Nginx Proxy Manager Access List
 
-### Docker
-- **Status**: ⏳ Not Started
-- **Priority**: High
-- **Estimated Time**: 4-6 hours
+### Container Registry
+- **Registry**: GitHub Container Registry
+- **Image**: `ghcr.io/dlarsen395/ets-events`
+- **Tags**: `latest`
 
 ---
 
 ## Success Metrics
 
-### Completion Rate: 95%
+### Completion Rate: 100%
 - ✅ Core Features: 100%
 - ✅ UI/UX: 100%
 - ✅ Mobile: 100%
-- ⏳ Deployment: 0%
+- ✅ Deployment: 100%
 
 ### Quality Score: A
 - Code Quality: A+
 - Performance: A+
-- Documentation: A
-- Testing: C (no tests yet)
+- Documentation: A+
+- Testing: C (no automated tests yet)
 
 ---
 

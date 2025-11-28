@@ -1,8 +1,11 @@
 # ETS Events Visualization - MVP Status
 
-## 🎉 MVP COMPLETED!
+## 🎉 V1.0.0 RELEASED!
 
-All core MVP features have been successfully implemented and tested.
+All MVP features have been successfully implemented, tested, and deployed to production.
+
+**Production URL**: https://ets.home.hushrush.com  
+**Container Image**: `ghcr.io/dlarsen395/ets-events:latest`
 
 ## Feature Status
 
@@ -46,12 +49,14 @@ All core MVP features have been successfully implemented and tested.
 - [x] Tablet/landscape support
 - [x] Mapbox logo preservation
 
-### ⏳ Docker Deployment (Pending)
-- [ ] Development Dockerfile
-- [ ] Production multi-stage build
-- [ ] docker-compose.yml
-- [ ] Nginx configuration
-- [ ] Environment variable handling
+### ✅ Docker Deployment (Complete)
+- [x] Multi-stage Dockerfile (Node build → Nginx production)
+- [x] docker-compose.yml for Swarm
+- [x] Nginx configuration with SPA routing
+- [x] Health check endpoint (/health)
+- [x] GitHub Container Registry (ghcr.io)
+- [x] Portainer stack deployment
+- [x] Nginx Proxy Manager integration (SSL + Auth)
 
 ## Success Criteria ✅
 
@@ -63,19 +68,20 @@ All core MVP features have been successfully implemented and tested.
 - [x] Loading states provide clear feedback
 - [x] Mobile layout adapts correctly
 - [x] Works across modern browsers (Chrome, Firefox, Safari, Edge)
-- [ ] Runs in Docker container (pending implementation)
+- [x] Runs in Docker container on Swarm
+- [x] Accessible via HTTPS with authentication
 
 ## Post-MVP Enhancements 📋
 
-Now that MVP is complete, these features are candidates for V2:
+Candidates for V1.1.0 and V2.0.0:
 
-### High Priority
-- [ ] Docker deployment (originally part of MVP scope)
+### High Priority (V1.1.0)
 - [ ] User-selectable color schemes (per copilot-instructions.md)
 - [ ] Keyboard shortcuts (space = play/pause, arrows = scrub)
-- [ ] URL state persistence (share specific time/range)
+- [ ] Event details popup on click
 
-### Medium Priority  
+### Medium Priority (V2.0.0)
+- [ ] URL state persistence (share specific time/range)
 - [ ] Event clustering at low zoom levels
 - [ ] Export functionality (screenshot, data CSV)
 - [ ] Performance mode (reduce animation quality for older devices)

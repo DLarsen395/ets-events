@@ -36,29 +36,29 @@ Write-Host ""
 Write-Host "✅ Build complete!" -ForegroundColor Green
 
 # Check if stack is already deployed
-$stackExists = docker stack ps ets 2>$null
+$null = docker stack ps ets-events 2>$null
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "🔄 Updating existing stack..." -ForegroundColor Yellow
-    docker service update --force ets_ets-events
+    docker service update --force ets-events_ets-events
 } else {
     Write-Host ""
     Write-Host "🆕 Deploying new stack..." -ForegroundColor Yellow
-    docker stack deploy -c docker-compose.ets-events.yml ets
+    docker stack deploy -c docker-compose.ets-events.yml ets-events
 }
 
 Write-Host ""
 Write-Host "✅ Deployment complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "📋 Next steps:" -ForegroundColor Cyan
-Write-Host "1. Open Nginx Proxy Manager: http://your-server:81"
-Write-Host "2. Add Proxy Host:"
-Write-Host "   - Domain: ets.yourdomain.com"
-Write-Host "   - Forward Hostname: ets_ets-events"
-Write-Host "   - Forward Port: 80"
-Write-Host "3. Enable SSL (Let's Encrypt)"
-Write-Host "4. Add Access List for authentication"
+Write-Host "1. Tag and push to GHCR:"
+Write-Host "   docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest"
+Write-Host "   docker push ghcr.io/dlarsen395/ets-events:latest"
+Write-Host ""
+Write-Host "2. Update in Portainer:"
+Write-Host "   - Go to Stacks → ets-events"
+Write-Host "   - Update service with 'Pull latest image'"
 Write-Host ""
 Write-Host "📊 Monitor deployment:" -ForegroundColor Cyan
-Write-Host "   docker service ps ets_ets-events"
-Write-Host "   docker service logs -f ets_ets-events"
+Write-Host "   docker service ps ets-events_ets-events"
+Write-Host "   docker service logs -f ets-events_ets-events"
