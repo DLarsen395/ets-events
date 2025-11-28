@@ -1,4 +1,4 @@
-# ETS Events - Docker Deployment Script (PowerShell)
+# ETS Events - Docker Deployment Script  (PowerShell)
 # For Docker Swarm with Nginx Proxy Manager
 
 $ErrorActionPreference = "Stop"
