@@ -244,7 +244,7 @@ export const MobileInfoPanel: React.FC<MobileInfoPanelProps> = ({
               <div style={{
                 height: '10px',
                 borderRadius: '4px',
-                background: 'linear-gradient(to right, #67E8F9 0%, #38BDF8 25%, #818CF8 50%, #A855F7 75%, #7C3AED 100%)',
+                background: 'linear-gradient(to right, #FFA500 0%, #FF6B35 25%, #FF3366 50%, #E91E63 75%, #9C27B0 100%)',
                 marginBottom: '4px',
               }} />
               <div style={{

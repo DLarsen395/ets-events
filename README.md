@@ -136,11 +136,11 @@ VITE_MAPBOX_TOKEN=your_mapbox_token_here
 ### Event Styling
 
 **Depth Colors** (interpolated):
-- 25km: `#67E8F9` (cyan)
-- 30km: `#38BDF8` (sky blue)
-- 35km: `#818CF8` (indigo)
-- 40km: `#A855F7` (purple)
-- 45km: `#7C3AED` (violet)
+- 25km: `#FFA500` (orange)
+- 30km: `#FF6B35` (coral)
+- 35km: `#FF3366` (hot pink)
+- 40km: `#E91E63` (magenta)
+- 45km: `#9C27B0` (deep purple)
 
 **Magnitude Sizes**:
 - < 0.7: 3px radius

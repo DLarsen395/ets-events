@@ -41,11 +41,11 @@ export const Legend: React.FC = () => {
           Depth (km)
         </div>
         
-        {/* Gradient bar - shallow (cyan) to deep (purple) */}
+        {/* Gradient bar - shallow (orange) to deep (purple) */}
         <div style={{
           height: '12px',
           borderRadius: '4px',
-          background: 'linear-gradient(to right, #67E8F9 0%, #38BDF8 25%, #818CF8 50%, #A855F7 75%, #7C3AED 100%)',
+          background: 'linear-gradient(to right, #FFA500 0%, #FF6B35 25%, #FF3366 50%, #E91E63 75%, #9C27B0 100%)',
           marginBottom: '4px',
         }} />
         
@@ -106,7 +106,7 @@ export const Legend: React.FC = () => {
                 width: `${size}px`,
                 height: `${size}px`,
                 borderRadius: '50%',
-                backgroundColor: '#818CF8',
+                backgroundColor: '#FF3366',
                 border: '1px solid rgba(255, 255, 255, 0.5)',
               }} />
               <span style={{ fontSize: '9px', color: '#9ca3af' }}>{label}</span>
