@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
 import { MapContainer } from './components/Map/MapContainer';
+import { DEFAULT_STYLE, type MapStyleKey } from './config/mapStyles';
 import { PlaybackControls } from './components/Controls/PlaybackControls';
-import { SideControls } from './components/Controls/SideControls';
+import { RightPanelLayout } from './components/Controls/RightPanelLayout';
 import { DataRangeSelector } from './components/Controls/DataRangeSelector';
 import { Legend } from './components/Controls/Legend';
-import { EventStats } from './components/Controls/EventStats';
 import { MobileInfoPanel } from './components/Controls/MobileInfoPanel';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
@@ -14,6 +14,10 @@ function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
   const isMobileDevice = useIsMobileDevice();
+  
+  // Map state (lifted up for RightPanelLayout Tools panel)
+  const [currentStyle, setCurrentStyle] = useState<MapStyleKey>(DEFAULT_STYLE);
+  const [showPlateBoundaries, setShowPlateBoundaries] = useState(true);
   
   // Track if we've ever had events loaded (derived state, not effect-based)
   const hasLoadedOnce = events.length > 0 || filteredEvents.length > 0;
@@ -112,7 +116,11 @@ function App() {
       </header>
       
       <main style={{ flex: 1, position: 'relative' }}>
-        <MapContainer events={displayEvents} />
+        <MapContainer 
+          events={displayEvents} 
+          currentStyle={currentStyle}
+          showPlateBoundaries={showPlateBoundaries}
+        />
         
         {/* Loading overlay for data refresh */}
         {isLoading && hasLoadedOnce && (
@@ -144,10 +152,14 @@ function App() {
         
         <DataRangeSelector isLoading={isLoading} />
         <Legend />
-        <EventStats 
+        <RightPanelLayout 
           events={events}
           visibleCount={displayEvents.length}
           isPlaying={!showAllEvents}
+          currentStyle={currentStyle}
+          onStyleChange={setCurrentStyle}
+          showPlateBoundaries={showPlateBoundaries}
+          onPlateBoundariesChange={setShowPlateBoundaries}
         />
         {isMobileDevice && (
           <MobileInfoPanel 
@@ -164,7 +176,6 @@ function App() {
           eventCount={displayEvents.length}
           totalEvents={events.length}
         />
-        <SideControls />
       </main>
     </div>
   );

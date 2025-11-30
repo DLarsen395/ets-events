@@ -92,3 +92,29 @@ export const useIsMobileSimple = (breakpoint: number = 768) => {
 
   return isMobile;
 };
+
+// Hook to detect if the screen is too short for all panels
+export const useIsShortScreen = (minHeight: number = 700) => {
+  const [isShort, setIsShort] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerHeight < minHeight;
+  });
+
+  useEffect(() => {
+    const checkHeight = () => {
+      setIsShort(window.innerHeight < minHeight);
+    };
+
+    window.addEventListener('resize', checkHeight);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(checkHeight, 100);
+    });
+    
+    return () => {
+      window.removeEventListener('resize', checkHeight);
+      window.removeEventListener('orientationchange', checkHeight);
+    };
+  }, [minHeight]);
+
+  return isShort;
+};

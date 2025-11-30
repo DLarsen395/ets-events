@@ -5,6 +5,38 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-29
+
+### 🗺️ Multiple Basemap Support & UI Improvements
+
+Added basemap selector with 7 free map styles and consolidated right-side panel layout.
+
+### Added
+- **Basemap Selector** - Dropdown to choose from 7 free basemap styles:
+  - Carto Voyager, Carto Dark Matter, Carto Positron
+  - OSM Bright, Stadia Outdoors (default), Alidade Smooth, Alidade Smooth Dark
+- **RightPanelLayout Component** - Unified layout for Tools, Controls, and Statistics panels
+- **useIsShortScreen Hook** - Detects short screens for responsive accordion layout
+- **Accordion Mode** - On screens < 650px height, panels collapse to save space
+
+### Changed
+- **Default Basemap** - Changed from Carto Dark to Stadia Outdoors for better terrain visibility
+- **Consolidated Right Panels** - Tools, Mode/Speed controls, and Statistics now in single vertical layout
+- **Map Style Config** - Moved to separate `src/config/mapStyles.ts` for cleaner imports
+- **Robust Style Switching** - Uses `idle` event + retry logic for reliable layer rebuilding after basemap changes
+
+### Removed
+- **SideControls Component** - Replaced by RightPanelLayout
+- **EventStats Component** - Integrated into RightPanelLayout
+- **Stamen Terrain** - Removed due to DEM dimension mismatch errors
+- **Satellite Option** - Removed (requires paid Stadia plan)
+
+### Fixed
+- **Layer Persistence** - Events and plate boundaries now persist correctly when switching basemaps
+- **Style Change Timing** - Added retry logic for basemaps that report ready before fully loaded
+
+---
+
 ## [1.1.0] - 2025-11-29
 
 ### 🗺️ MapLibre Migration - Free & Open Source Maps

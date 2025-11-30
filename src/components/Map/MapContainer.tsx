@@ -1,65 +1,217 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import type { ETSEvent } from '../../types/event';
 import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
-
-// Free basemap styles - no API key required
-const MAP_STYLES = {
-  // Carto free basemaps (reliable, fast)
-  cartoDark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  cartoLight: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-};
+import { MAP_STYLES, type MapStyleKey } from '../../config/mapStyles';
 
 // USGS Plate Boundaries tile service
 const PLATE_BOUNDARIES_TILES = 'https://earthquake.usgs.gov/arcgis/rest/services/eq/map_plateboundaries/MapServer/tile/{z}/{y}/{x}';
 
 interface MapContainerProps {
   events: ETSEventWithOpacity[];
+  currentStyle: MapStyleKey;
+  showPlateBoundaries: boolean;
 }
 
-export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
+export const MapContainer: React.FC<MapContainerProps> = ({ 
+  events, 
+  currentStyle, 
+  showPlateBoundaries,
+}) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<maplibregl.Map | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [showPlateBoundaries, setShowPlateBoundaries] = useState(true);
+  const prevStyleRef = useRef(currentStyle);
+  const isChangingStyle = useRef(false);
+
+  // Rebuild all custom layers - called after style load/change
+  const rebuildLayers = useCallback((
+    mapInstance: maplibregl.Map, 
+    eventsData: ETSEventWithOpacity[], 
+    plateBoundariesVisible: boolean,
+    retryCount = 0
+  ) => {
+    console.log('rebuildLayers called:', { 
+      eventsCount: eventsData.length, 
+      plateBoundariesVisible,
+      hasMap: !!mapInstance,
+      retryCount
+    });
+
+    // Check if style is actually ready
+    if (!mapInstance.isStyleLoaded()) {
+      if (retryCount < 10) {
+        console.log('Style not ready, retrying in 200ms...');
+        setTimeout(() => rebuildLayers(mapInstance, eventsData, plateBoundariesVisible, retryCount + 1), 200);
+        return;
+      } else {
+        console.error('Style never became ready after 10 retries');
+        return;
+      }
+    }
+
+    // Clear any existing custom layers first
+    try {
+      if (mapInstance.getLayer('events-circle')) {
+        mapInstance.removeLayer('events-circle');
+      }
+      if (mapInstance.getSource('events')) {
+        mapInstance.removeSource('events');
+      }
+      if (mapInstance.getLayer('plate-boundaries-layer')) {
+        mapInstance.removeLayer('plate-boundaries-layer');
+      }
+      if (mapInstance.getSource('plate-boundaries')) {
+        mapInstance.removeSource('plate-boundaries');
+      }
+    } catch (e) {
+      console.log('Error clearing layers (expected on first load):', e);
+    }
+
+    // Add plate boundaries layer FIRST (below events)
+    try {
+      mapInstance.addSource('plate-boundaries', {
+        type: 'raster',
+        tiles: [PLATE_BOUNDARIES_TILES],
+        tileSize: 256,
+        attribution: '© USGS Earthquake Hazards Program',
+      });
+
+      mapInstance.addLayer({
+        id: 'plate-boundaries-layer',
+        type: 'raster',
+        source: 'plate-boundaries',
+        paint: {
+          'raster-opacity': 0.7,
+        },
+      });
+
+      mapInstance.setLayoutProperty(
+        'plate-boundaries-layer',
+        'visibility',
+        plateBoundariesVisible ? 'visible' : 'none'
+      );
+      console.log('Plate boundaries layer added, visible:', plateBoundariesVisible);
+    } catch (e) {
+      console.error('Error adding plate boundaries:', e);
+      // Retry if this fails
+      if (retryCount < 5) {
+        setTimeout(() => rebuildLayers(mapInstance, eventsData, plateBoundariesVisible, retryCount + 1), 300);
+        return;
+      }
+    }
+
+    // Add events layer SECOND (on top)
+    if (eventsData.length > 0) {
+      try {
+        const geojsonData: GeoJSON.FeatureCollection = {
+          type: 'FeatureCollection',
+          features: eventsData.map(event => ({
+            type: 'Feature' as const,
+            geometry: event.geometry,
+            properties: {
+              ...event.properties,
+              opacity: event.opacity,
+            },
+          })),
+        };
+
+        mapInstance.addSource('events', {
+          type: 'geojson',
+          data: geojsonData,
+        });
+
+        mapInstance.addLayer({
+          id: 'events-circle',
+          type: 'circle',
+          source: 'events',
+          paint: {
+            'circle-radius': [
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'magnitude'], 0.5],
+              0.4, 3,
+              1.9, 10.5
+            ],
+            'circle-color': [
+              'interpolate',
+              ['linear'],
+              ['coalesce', ['get', 'depth'], 35],
+              25, '#FFA500',
+              30, '#FF6B35',
+              35, '#FF3366',
+              40, '#E91E63',
+              45, '#9C27B0'
+            ],
+            'circle-opacity': ['coalesce', ['get', 'opacity'], 0.8],
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-opacity': ['coalesce', ['get', 'opacity'], 0.8],
+          },
+        });
+
+        // Add hover effect
+        mapInstance.on('mouseenter', 'events-circle', () => {
+          mapInstance.getCanvas().style.cursor = 'pointer';
+        });
+
+        mapInstance.on('mouseleave', 'events-circle', () => {
+          mapInstance.getCanvas().style.cursor = '';
+        });
+
+        // Add click handler for popups
+        mapInstance.on('click', 'events-circle', (e) => {
+          if (!e.features || e.features.length === 0) return;
+
+          const feature = e.features[0];
+          const props = feature.properties as ETSEvent['properties'];
+
+          new maplibregl.Popup({ className: 'dark-popup' })
+            .setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number])
+            .setHTML(`
+              <div style="padding: 12px; color: #f3f4f6;">
+                <h3 style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; color: #fff;">Event #${props.id}</h3>
+                <div style="font-size: 0.875rem; line-height: 1.6;">
+                  <p><strong>Magnitude:</strong> ${props.magnitude ?? 'N/A'}</p>
+                  <p><strong>Depth:</strong> ${props.depth?.toFixed(1) ?? 'N/A'} km</p>
+                  <p><strong>Energy:</strong> ${props.energy?.toLocaleString() ?? 'N/A'}</p>
+                  <p><strong>Duration:</strong> ${props.duration ?? 'N/A'}s</p>
+                  <p><strong>Stations:</strong> ${props.num_stas ?? 'N/A'}</p>
+                  <p><strong>Time:</strong> ${props.time ? new Date(props.time).toLocaleString() : 'N/A'}</p>
+                </div>
+              </div>
+            `)
+            .addTo(mapInstance);
+        });
+
+        console.log('Events layer added with', eventsData.length, 'events');
+      } catch (e) {
+        console.error('Error adding events layer:', e);
+      }
+    }
+  }, []);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current) return;
+    if (!mapContainer.current || mapRef.current) return;
 
-    // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
       if (!mapContainer.current) return;
 
       try {
         const mapInstance = new maplibregl.Map({
           container: mapContainer.current,
-          style: MAP_STYLES.cartoDark, // Dark theme for seismic visualization
-          center: [-124.0, 44.5], // Centered on Oregon coast for full CSZ view
-          zoom: 5.2, // Zoom to show Vancouver Island to Northern California
+          style: MAP_STYLES[currentStyle].url,
+          center: [-124.0, 44.5],
+          zoom: 5.2,
         });
 
-        map.current = mapInstance;
+        mapRef.current = mapInstance;
 
         mapInstance.on('load', () => {
-          // Add USGS Plate Boundaries as raster tile layer
-          mapInstance.addSource('plate-boundaries', {
-            type: 'raster',
-            tiles: [PLATE_BOUNDARIES_TILES],
-            tileSize: 256,
-            attribution: '© USGS Earthquake Hazards Program',
-          });
-
-          mapInstance.addLayer({
-            id: 'plate-boundaries-layer',
-            type: 'raster',
-            source: 'plate-boundaries',
-            paint: {
-              'raster-opacity': 0.7,
-            },
-          });
-
+          console.log('Initial map load');
+          rebuildLayers(mapInstance, events, showPlateBoundaries);
           setMapLoaded(true);
         });
 
@@ -68,12 +220,6 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
           setMapError(`Map error: ${e.error?.message || JSON.stringify(e)}`);
         });
 
-        // Fallback: check if map is already loaded
-        if (mapInstance.loaded()) {
-          setMapLoaded(true);
-        }
-
-        // Add controls
         mapInstance.addControl(new maplibregl.NavigationControl(), 'top-right');
 
       } catch (err) {
@@ -84,29 +230,84 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
 
     return () => {
       clearTimeout(timer);
-      map.current?.remove();
+      mapRef.current?.remove();
+      mapRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Toggle plate boundaries visibility
+  // Handle style changes
   useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+    const mapInstance = mapRef.current;
+    if (!mapInstance || !mapLoaded) return;
+    if (currentStyle === prevStyleRef.current) return;
+    if (isChangingStyle.current) return;
     
-    const layer = map.current.getLayer('plate-boundaries-layer');
-    if (layer) {
-      map.current.setLayoutProperty(
-        'plate-boundaries-layer',
-        'visibility',
-        showPlateBoundaries ? 'visible' : 'none'
-      );
+    console.log('Style change:', prevStyleRef.current, '->', currentStyle);
+    prevStyleRef.current = currentStyle;
+    isChangingStyle.current = true;
+    
+    // Store current map state
+    const center = mapInstance.getCenter();
+    const zoom = mapInstance.getZoom();
+    const bearing = mapInstance.getBearing();
+    const pitch = mapInstance.getPitch();
+    
+    // Capture current values for the callback
+    const currentEvents = events;
+    const currentShowPlateBoundaries = showPlateBoundaries;
+    
+    // Change the style
+    mapInstance.setStyle(MAP_STYLES[currentStyle].url);
+    
+    // Use 'idle' event which fires when map is fully rendered
+    const onIdle = () => {
+      console.log('Map idle after style change, rebuilding layers');
+      
+      // Restore map position
+      mapInstance.setCenter(center);
+      mapInstance.setZoom(zoom);
+      mapInstance.setBearing(bearing);
+      mapInstance.setPitch(pitch);
+      
+      // Small delay to ensure style internals are ready
+      setTimeout(() => {
+        // Rebuild all layers with captured values
+        rebuildLayers(mapInstance, currentEvents, currentShowPlateBoundaries);
+        isChangingStyle.current = false;
+      }, 100);
+    };
+    
+    mapInstance.once('idle', onIdle);
+    
+  }, [currentStyle, mapLoaded, events, showPlateBoundaries, rebuildLayers]);
+
+  // Toggle plate boundaries visibility (without full rebuild)
+  useEffect(() => {
+    const mapInstance = mapRef.current;
+    if (!mapInstance || !mapLoaded || isChangingStyle.current) return;
+    
+    try {
+      const layer = mapInstance.getLayer('plate-boundaries-layer');
+      if (layer) {
+        mapInstance.setLayoutProperty(
+          'plate-boundaries-layer',
+          'visibility',
+          showPlateBoundaries ? 'visible' : 'none'
+        );
+        console.log('Plate boundaries visibility set to:', showPlateBoundaries);
+      }
+    } catch (e) {
+      console.log('Could not toggle plate boundaries:', e);
     }
   }, [showPlateBoundaries, mapLoaded]);
 
-  // Add events to map when loaded
+  // Update events data (without full rebuild if just updating source)
   useEffect(() => {
-    if (!map.current || !mapLoaded || events.length === 0) return;
+    const mapInstance = mapRef.current;
+    if (!mapInstance || !mapLoaded || isChangingStyle.current) return;
+    if (events.length === 0) return;
 
-    // Convert events to GeoJSON, including opacity in properties
     const geojsonData: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
       features: events.map(event => ({
@@ -119,128 +320,25 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       })),
     };
 
-    // Add source if it doesn't exist
-    if (!map.current.getSource('events')) {
-      map.current.addSource('events', {
-        type: 'geojson',
-        data: geojsonData,
-      });
-
-      // Add circle layer for events
-      map.current.addLayer({
-        id: 'events-circle',
-        type: 'circle',
-        source: 'events',
-        paint: {
-          'circle-radius': [
-            'interpolate',
-            ['linear'],
-            ['coalesce', ['get', 'magnitude'], 0.5],
-            0.4, 3,
-            1.9, 10.5
-          ],
-          // Depth-based color: shallow (25km) = orange, deep (45km) = purple
-          'circle-color': [
-            'interpolate',
-            ['linear'],
-            ['coalesce', ['get', 'depth'], 35],
-            25, '#FFA500',  // Orange (shallow)
-            30, '#FF6B35',  // Coral
-            35, '#FF3366',  // Hot pink
-            40, '#E91E63',  // Magenta
-            45, '#9C27B0'   // Deep purple (deep)
-          ],
-          'circle-opacity': ['coalesce', ['get', 'opacity'], 0.8],
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#ffffff',
-          'circle-stroke-opacity': ['coalesce', ['get', 'opacity'], 0.8],
-        },
-      });
-
-      // Add hover effect
-      map.current.on('mouseenter', 'events-circle', () => {
-        if (map.current) {
-          map.current.getCanvas().style.cursor = 'pointer';
-        }
-      });
-
-      map.current.on('mouseleave', 'events-circle', () => {
-        if (map.current) {
-          map.current.getCanvas().style.cursor = '';
-        }
-      });
-
-      // Add click handler for popups
-      map.current.on('click', 'events-circle', (e) => {
-        if (!e.features || e.features.length === 0) return;
-
-        const feature = e.features[0];
-        const props = feature.properties as ETSEvent['properties'];
-
-        new maplibregl.Popup({ className: 'dark-popup' })
-          .setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number])
-          .setHTML(`
-            <div style="padding: 12px; color: #f3f4f6;">
-              <h3 style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px; color: #fff;">Event #${props.id}</h3>
-              <div style="font-size: 0.875rem; line-height: 1.6;">
-                <p><strong>Magnitude:</strong> ${props.magnitude ?? 'N/A'}</p>
-                <p><strong>Depth:</strong> ${props.depth?.toFixed(1) ?? 'N/A'} km</p>
-                <p><strong>Energy:</strong> ${props.energy?.toLocaleString() ?? 'N/A'}</p>
-                <p><strong>Duration:</strong> ${props.duration ?? 'N/A'}s</p>
-                <p><strong>Stations:</strong> ${props.num_stas ?? 'N/A'}</p>
-                <p><strong>Time:</strong> ${props.time ? new Date(props.time).toLocaleString() : 'N/A'}</p>
-              </div>
-            </div>
-          `)
-          .addTo(map.current!);
-      });
-    } else {
-      // Update existing source
-      const source = map.current.getSource('events') as maplibregl.GeoJSONSource;
-      source.setData(geojsonData);
+    try {
+      const source = mapInstance.getSource('events') as maplibregl.GeoJSONSource | undefined;
+      if (source) {
+        source.setData(geojsonData);
+        console.log('Events source updated with', events.length, 'events');
+      } else {
+        // Source doesn't exist, need to rebuild
+        console.log('Events source not found, rebuilding layers');
+        rebuildLayers(mapInstance, events, showPlateBoundaries);
+      }
+    } catch (e) {
+      console.log('Error updating events, rebuilding:', e);
+      rebuildLayers(mapInstance, events, showPlateBoundaries);
     }
-  }, [events, mapLoaded]);
+  }, [events, mapLoaded, showPlateBoundaries, rebuildLayers]);
 
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
-      
-      {/* Plate Boundaries Toggle */}
-      {mapLoaded && !mapError && (
-        <div style={{
-          position: 'absolute',
-          top: '120px',
-          right: '10px',
-          zIndex: 100,
-          background: 'rgba(30, 30, 40, 0.9)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: '6px',
-          padding: '8px 12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-        }}>
-          <label style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            color: '#e5e7eb',
-          }}>
-            <input
-              type="checkbox"
-              checked={showPlateBoundaries}
-              onChange={(e) => setShowPlateBoundaries(e.target.checked)}
-              style={{ 
-                width: '14px', 
-                height: '14px',
-                accentColor: '#3b82f6',
-              }}
-            />
-            Plate Boundaries
-          </label>
-        </div>
-      )}
       
       {/* Error state */}
       {mapError && (
