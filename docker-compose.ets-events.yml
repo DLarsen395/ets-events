@@ -3,8 +3,6 @@ version: '3.8'
 services:
   ets-events:
     image: ghcr.io/dlarsen395/ets-events:latest
-    environment:
-      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
     deploy:
       replicas: 1
       restart_policy:
@@ -31,21 +29,19 @@ networks:
 # This is the production compose file for Docker Swarm deployment.
 # The image is pulled from GitHub Container Registry.
 #
-# REQUIRED: Set the MAPBOX_TOKEN environment variable before deploying.
-# In Portainer, add it under "Environment variables" when creating/updating the stack.
+# No environment variables required - uses free MapLibre + Carto basemaps.
 #
 # Deploy via Portainer:
 #   1. Stacks → Add stack → paste this file
 #   2. Stack name: ets-events
-#   3. Add environment variable: MAPBOX_TOKEN=<your-token>
-#   4. Deploy
+#   3. Deploy
 #
 # Or via CLI:
-#   export MAPBOX_TOKEN=<your-token>
 #   docker stack deploy -c docker-compose.ets-events.yml ets-events
 #
 # Update:
 #   docker service update --image ghcr.io/dlarsen395/ets-events:latest ets-events_ets-events
 #
 # Logs:
+#   docker service logs -f ets-events_ets-events
 #   docker service logs -f ets-events_ets-events

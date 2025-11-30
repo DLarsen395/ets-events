@@ -3,7 +3,7 @@
 An interactive web application for visualizing Pacific Northwest ETS (Episodic Tremor and Slip) seismic events with real-time playback, live data integration, and mobile-responsive design.
 
 ![ETS Events Map](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.0.0-blue)
+![Version](https://img.shields.io/badge/Version-1.1.0-blue)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
@@ -12,11 +12,12 @@ An interactive web application for visualizing Pacific Northwest ETS (Episodic T
 ## 🌟 Features
 
 ### Core Functionality
-- **Interactive Map Visualization** - Mapbox GL JS with custom dark theme
+- **Interactive Map Visualization** - MapLibre GL JS with free Carto basemaps (no API key required!)
+- **Tectonic Plate Boundaries** - USGS plate boundary overlay with toggle control
 - **Live Data Integration** - Real-time events from PNSN Tremor API
 - **Temporal Playback** - Watch events unfold chronologically with play/pause controls
 - **Multiple Time Ranges** - 48 hours, week, month, year, or custom date range
-- **Depth-Based Coloring** - Events colored by depth (25-45km, cyan→purple gradient)
+- **Depth-Based Coloring** - Events colored by depth (25-45km, orange→magenta gradient)
 - **Magnitude-Based Sizing** - Event markers sized by magnitude (0.4-1.6+)
 - **Speed Controls** - Playback speeds from 0.1x to 10x
 - **Timeline Scrubbing** - Click or drag to jump to any point in time
@@ -33,7 +34,6 @@ An interactive web application for visualizing Pacific Northwest ETS (Episodic T
 
 ### Prerequisites
 - Node.js 18+ and npm
-- Mapbox API token ([Get one free](https://account.mapbox.com/))
 
 ### Installation
 
@@ -45,12 +45,6 @@ cd hushrush-ets-events
 # Install dependencies
 npm install
 
-# Create environment file
-cp .env.example .env
-
-# Add your Mapbox token to .env
-VITE_MAPBOX_TOKEN=pk.eyJ1...your-token-here
-
 # Start development server
 npm run dev
 ```
@@ -61,7 +55,9 @@ The app will be available at `http://localhost:5173`
 
 - **Frontend Framework**: React 19 with TypeScript
 - **Build Tool**: Vite 7.2.4
-- **Map Library**: Mapbox GL JS with custom style
+- **Map Library**: MapLibre GL JS (open-source, no API key required)
+- **Basemap**: Carto Dark Matter (free)
+- **Overlays**: USGS Tectonic Plate Boundaries
 - **State Management**: Zustand
 - **Data Source**: PNSN Tremor API (https://tremorapi.pnsn.org)
 - **Styling**: Tailwind CSS with dark mode, glassmorphism effects
@@ -121,15 +117,10 @@ src/
 
 ## ⚙️ Configuration
 
-### Environment Variables
-
-```env
-VITE_MAPBOX_TOKEN=your_mapbox_token_here
-```
-
 ### Map Configuration
 
-- **Style**: `mapbox://styles/dlarsen395/cmihxx3wa005o01stf9mm69b6`
+- **Basemap**: Carto Dark Matter (free, no API key)
+- **Overlays**: USGS Tectonic Plate Boundaries
 - **Center**: [-124.0, 44.5] (Cascadia Subduction Zone)
 - **Initial Zoom**: 5.2
 
@@ -187,15 +178,15 @@ Outputs optimized static files to `dist/` directory.
 
 ### Docker Deployment
 
-The Docker image uses **runtime token injection** - the Mapbox token is NOT bundled into the build. Instead, it's injected when the container starts via environment variable.
+The Docker image is completely self-contained - no API keys or environment variables required!
 
 #### Quick Start (Local Testing)
 ```bash
-# Build the image (no token needed at build time)
+# Build the image
 docker build -t ets-events:latest .
 
-# Run locally with your Mapbox token
-docker run -d -p 8080:80 -e MAPBOX_TOKEN=your_token_here --name ets-events-test ets-events:latest
+# Run locally
+docker run -d -p 8080:80 --name ets-events-test ets-events:latest
 
 # Test at http://localhost:8080
 ```
@@ -225,8 +216,6 @@ version: "3.8"
 services:
   ets-events:
     image: ghcr.io/dlarsen395/ets-events:latest
-    environment:
-      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
     networks:
       - npm-proxy
     deploy:
@@ -239,11 +228,7 @@ networks:
     external: true
 ```
 
-3. **Add Environment Variable** in Portainer:
-   - Under "Environment variables" section
-   - Add: `MAPBOX_TOKEN` = `your_mapbox_token_here`
-
-4. **Configure Nginx Proxy Manager**:
+3. **Configure Nginx Proxy Manager**:
    - Forward Hostname: `ets-events_ets-events`
    - Forward Port: `80`
    - Attach Access List for authentication
@@ -251,6 +236,11 @@ networks:
 See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 
 ## 🗺️ Roadmap
+
+### ✅ Completed (V1.1.0)
+- [x] MapLibre GL JS (free, no API key)
+- [x] USGS Tectonic Plate Boundaries overlay
+- [x] Warm color scheme for better visibility
 
 ### ✅ Completed (V1.0.0)
 - [x] Live PNSN API integration
@@ -279,10 +269,9 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 ## 🐛 Troubleshooting
 
 ### Map not displaying?
-1. Verify Mapbox token in `.env` file
-2. Restart dev server after `.env` changes
-3. Check browser console for errors
-4. Ensure token has required scopes
+1. Check browser console for errors
+2. Verify internet connection (basemap tiles need network access)
+3. Try refreshing the page
 
 ### Events not loading?
 1. Check internet connection
@@ -303,7 +292,9 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 ## 🙏 Acknowledgments
 
 - **PNSN** - Pacific Northwest Seismic Network for tremor data API
-- **Mapbox** - Map tiles and GL JS library
+- **MapLibre** - Open-source map library (fork of Mapbox GL JS)
+- **Carto** - Free basemap tiles
+- **USGS** - Tectonic plate boundary data
 - **React Team** - React 19 framework
 - **Vite Team** - Lightning-fast build tool
 

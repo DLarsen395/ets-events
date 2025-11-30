@@ -5,6 +5,34 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-11-29
+
+### 🗺️ MapLibre Migration - Free & Open Source Maps
+
+Replaced Mapbox GL JS with MapLibre GL JS to eliminate API key requirements and costs.
+
+### Added
+- **Tectonic Plate Boundaries** - USGS plate boundary overlay from ArcGIS REST services
+- **Plate Boundary Toggle** - UI control to show/hide plate boundaries layer
+- **OpenFreeMap Integration** - Free basemap tiles, no API key required
+
+### Changed
+- **Map Library** - Migrated from Mapbox GL JS to MapLibre GL JS (open-source fork)
+- **Basemap Style** - Using OpenFreeMap positron (light) or dark style
+- **No API Key Required** - Removed Mapbox token dependency entirely
+- **Improved Event Visibility** - Warm color scheme (orange→magenta) contrasts better with terrain
+
+### Removed
+- **Mapbox Dependency** - No longer requires Mapbox API token
+- **Runtime Token Injection** - Removed config.js and docker-entrypoint.sh token handling
+
+### Technical
+- Replaced `mapbox-gl` npm package with `maplibre-gl`
+- Updated TypeScript types from `@types/mapbox-gl` to `maplibre-gl` (includes own types)
+- Layer API remains nearly identical (minimal code changes)
+
+---
+
 ## [1.0.1] - 2025-01-28
 
 ### Fixed

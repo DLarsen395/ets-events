@@ -7,19 +7,14 @@ This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL
 **Production URL**: https://ets.home.hushrush.com  
 **Container Image**: `ghcr.io/dlarsen395/ets-events:latest`
 
-## Security: Runtime Token Injection
+## ✨ No API Keys Required!
 
-The Mapbox token is **NOT bundled into the Docker image**. Instead, it's injected at container startup via the `MAPBOX_TOKEN` environment variable. This means:
-
-- ✅ The image can be shared publicly without exposing your token
-- ✅ Different environments can use different tokens
-- ✅ Token rotation doesn't require rebuilding the image
+As of v1.1.0, this application uses **MapLibre GL JS** with free Carto basemaps. No API keys or tokens are needed - the image is completely self-contained.
 
 ## Prerequisites
 
 - Docker Swarm initialized
 - Nginx Proxy Manager running on `npm-proxy` network
-- Mapbox API token (for runtime injection)
 - GitHub PAT with `write:packages` and `read:packages` scopes
 
 ## Quick Start
@@ -27,15 +22,15 @@ The Mapbox token is **NOT bundled into the Docker image**. Instead, it's injecte
 ### 1. Build the Docker Image
 
 ```bash
-# Build the image (no token needed at build time!)
+# Build the image
 docker build -t ets-events:latest .
 ```
 
 ### 2. Test Locally (Optional)
 
 ```bash
-# Run container locally with your token
-docker run -d -p 8080:80 -e MAPBOX_TOKEN=your_token_here --name ets-events-test ets-events:latest
+# Run container locally
+docker run -d -p 8080:80 --name ets-events-test ets-events:latest
 
 # Test at http://localhost:8080
 
@@ -75,8 +70,6 @@ version: "3.8"
 services:
   ets-events:
     image: ghcr.io/dlarsen395/ets-events:latest
-    environment:
-      - MAPBOX_TOKEN=${MAPBOX_TOKEN}
     networks:
       - npm-proxy
     deploy:
@@ -89,11 +82,7 @@ networks:
     external: true
 ```
 
-3. **Add Environment Variable**:
-   - Scroll to "Environment variables" section
-   - Add: `MAPBOX_TOKEN` = `pk.eyJ1...` (your full Mapbox token)
-
-4. **Deploy the stack**
+3. **Deploy the stack**
 
 ### 5. Configure Nginx Proxy Manager
 

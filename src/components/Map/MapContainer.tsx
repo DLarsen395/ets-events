@@ -1,23 +1,17 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
-import mapboxgl from 'mapbox-gl';
+import { useEffect, useRef, useState } from 'react';
+import maplibregl from 'maplibre-gl';
 import type { ETSEvent } from '../../types/event';
 import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
 
-// Get Mapbox token from runtime config (Docker) or env var (development)
-const getMapboxToken = (): string | undefined => {
-  // Runtime config (injected by Docker at startup)
-  if (window.__RUNTIME_CONFIG__?.MAPBOX_TOKEN && 
-      window.__RUNTIME_CONFIG__.MAPBOX_TOKEN !== '__MAPBOX_TOKEN_PLACEHOLDER__') {
-    return window.__RUNTIME_CONFIG__.MAPBOX_TOKEN;
-  }
-  // Fallback to build-time env var (development)
-  return import.meta.env.VITE_MAPBOX_TOKEN;
+// Free basemap styles - no API key required
+const MAP_STYLES = {
+  // Carto free basemaps (reliable, fast)
+  cartoDark: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  cartoLight: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
 };
 
-const token = getMapboxToken();
-if (token) {
-  mapboxgl.accessToken = token;
-}
+// USGS Plate Boundaries tile service
+const PLATE_BOUNDARIES_TILES = 'https://earthquake.usgs.gov/arcgis/rest/services/eq/map_plateboundaries/MapServer/tile/{z}/{y}/{x}';
 
 interface MapContainerProps {
   events: ETSEventWithOpacity[];
@@ -25,31 +19,23 @@ interface MapContainerProps {
 
 export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
+  const map = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
-  
-  // Check for token error before render (not in effect)
-  const tokenError = useMemo(() => {
-    if (!token) {
-      return 'Mapbox token is missing. Please add VITE_MAPBOX_TOKEN to .env file.';
-    }
-    return null;
-  }, []);
-  
-  const [mapError, setMapError] = useState<string | null>(tokenError);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [showPlateBoundaries, setShowPlateBoundaries] = useState(true);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || map.current || tokenError) return;
+    if (!mapContainer.current || map.current) return;
 
     // Small delay to ensure DOM is ready
     const timer = setTimeout(() => {
       if (!mapContainer.current) return;
 
       try {
-        const mapInstance = new mapboxgl.Map({
+        const mapInstance = new maplibregl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/dlarsen395/cmihxx3wa005o01stf9mm69b6',
+          style: MAP_STYLES.cartoDark, // Dark theme for seismic visualization
           center: [-124.0, 44.5], // Centered on Oregon coast for full CSZ view
           zoom: 5.2, // Zoom to show Vancouver Island to Northern California
         });
@@ -57,11 +43,28 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         map.current = mapInstance;
 
         mapInstance.on('load', () => {
+          // Add USGS Plate Boundaries as raster tile layer
+          mapInstance.addSource('plate-boundaries', {
+            type: 'raster',
+            tiles: [PLATE_BOUNDARIES_TILES],
+            tileSize: 256,
+            attribution: '© USGS Earthquake Hazards Program',
+          });
+
+          mapInstance.addLayer({
+            id: 'plate-boundaries-layer',
+            type: 'raster',
+            source: 'plate-boundaries',
+            paint: {
+              'raster-opacity': 0.7,
+            },
+          });
+
           setMapLoaded(true);
         });
 
         mapInstance.on('error', (e) => {
-          console.error('Mapbox error:', e);
+          console.error('MapLibre error:', e);
           setMapError(`Map error: ${e.error?.message || JSON.stringify(e)}`);
         });
 
@@ -71,7 +74,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         }
 
         // Add controls
-        mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        mapInstance.addControl(new maplibregl.NavigationControl(), 'top-right');
 
       } catch (err) {
         console.error('Failed to initialize map:', err);
@@ -83,7 +86,21 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       clearTimeout(timer);
       map.current?.remove();
     };
-  }, [tokenError]);
+  }, []);
+
+  // Toggle plate boundaries visibility
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+    
+    const layer = map.current.getLayer('plate-boundaries-layer');
+    if (layer) {
+      map.current.setLayoutProperty(
+        'plate-boundaries-layer',
+        'visibility',
+        showPlateBoundaries ? 'visible' : 'none'
+      );
+    }
+  }, [showPlateBoundaries, mapLoaded]);
 
   // Add events to map when loaded
   useEffect(() => {
@@ -160,7 +177,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
         const feature = e.features[0];
         const props = feature.properties as ETSEvent['properties'];
 
-        new mapboxgl.Popup({ className: 'dark-popup' })
+        new maplibregl.Popup({ className: 'dark-popup' })
           .setLngLat((feature.geometry as GeoJSON.Point).coordinates as [number, number])
           .setHTML(`
             <div style="padding: 12px; color: #f3f4f6;">
@@ -179,7 +196,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
       });
     } else {
       // Update existing source
-      const source = map.current.getSource('events') as mapboxgl.GeoJSONSource;
+      const source = map.current.getSource('events') as maplibregl.GeoJSONSource;
       source.setData(geojsonData);
     }
   }, [events, mapLoaded]);
@@ -187,6 +204,43 @@ export const MapContainer: React.FC<MapContainerProps> = ({ events }) => {
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div ref={mapContainer} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+      
+      {/* Plate Boundaries Toggle */}
+      {mapLoaded && !mapError && (
+        <div style={{
+          position: 'absolute',
+          top: '120px',
+          right: '10px',
+          zIndex: 100,
+          background: 'rgba(30, 30, 40, 0.9)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: '6px',
+          padding: '8px 12px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+        }}>
+          <label style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            color: '#e5e7eb',
+          }}>
+            <input
+              type="checkbox"
+              checked={showPlateBoundaries}
+              onChange={(e) => setShowPlateBoundaries(e.target.checked)}
+              style={{ 
+                width: '14px', 
+                height: '14px',
+                accentColor: '#3b82f6',
+              }}
+            />
+            Plate Boundaries
+          </label>
+        </div>
+      )}
       
       {/* Error state */}
       {mapError && (
