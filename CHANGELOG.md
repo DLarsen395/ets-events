@@ -5,6 +5,19 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-11-30
+
+### 🔧 Time Range Improvements
+
+### Changed
+- **Default Time Range** - Changed "Last 48 Hours" back to "Last 24 Hours" for more relevant data
+- Empty event results are handled gracefully - displays 0 events instead of workaround lookback
+
+### Fixed
+- Time range selector now properly reflects when no events exist for a period (can happen during quiet months)
+
+---
+
 ## [1.2.0] - 2025-11-29
 
 ### 🗺️ Multiple Basemap Support & UI Improvements
@@ -103,7 +116,7 @@ First stable release of the ETS Events Visualization application.
 - **Interactive Map Visualization** - Mapbox GL JS with custom dark theme centered on Cascadia Subduction Zone
 - **Live Data Integration** - Real-time seismic events from PNSN Tremor API
 - **Temporal Playback Engine** - Watch events unfold chronologically with smooth animations
-- **Time Range Presets** - 48 hours, Week, Month, Year, or custom date range
+- **Time Range Presets** - 24 hours, Week, Month, Year, or custom date range
 - **Depth-Based Coloring** - Events colored by depth (25-45km, cyan→purple gradient)
 - **Magnitude-Based Sizing** - Event markers sized by magnitude (0.4-1.6+)
 - **Speed Controls** - Playback speeds from 0.1x to 10x

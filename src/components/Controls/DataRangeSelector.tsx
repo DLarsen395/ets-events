@@ -14,7 +14,7 @@ interface PresetOption {
 }
 
 const presetOptions: PresetOption[] = [
-  { value: 'lastDay', label: 'Last 48 Hours', mobileLabel: '48h' },
+  { value: 'lastDay', label: 'Last 24 Hours', mobileLabel: '24h' },
   { value: 'lastWeek', label: 'Last Week', mobileLabel: 'Week' },
   { value: 'lastMonth', label: 'Last Month', mobileLabel: 'Month' },
   { value: 'lastYear', label: 'Last Year', mobileLabel: 'Year' },

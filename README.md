@@ -19,7 +19,7 @@ An interactive web application for visualizing Pacific Northwest ETS (Episodic T
 - **Tectonic Plate Boundaries** - USGS plate boundary overlay with toggle control
 - **Live Data Integration** - Real-time events from PNSN Tremor API
 - **Temporal Playback** - Watch events unfold chronologically with play/pause controls
-- **Multiple Time Ranges** - 48 hours, week, month, year, or custom date range
+- **Multiple Time Ranges** - 24 hours, week, month, year, or custom date range
 - **Depth-Based Coloring** - Events colored by depth (25-45km, orange→magenta gradient)
 - **Magnitude-Based Sizing** - Event markers sized by magnitude (0.4-1.6+)
 - **Speed Controls** - Playback speeds from 0.1x to 10x

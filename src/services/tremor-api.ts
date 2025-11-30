@@ -61,8 +61,8 @@ export const getPresetDateRange = (preset: DataRangePreset): { starttime: string
 
   switch (preset) {
     case 'lastDay':
-      // Look back 48 hours since data is published around 7pm PST daily
-      startTime = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+      // Look back 24 hours - empty results are handled gracefully
+      startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       break;
     case 'lastWeek':
       startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
