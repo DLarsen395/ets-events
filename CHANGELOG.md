@@ -5,6 +5,17 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-11-30
+
+### 🐛 Bug Fix
+
+### Fixed
+- **Default Basemap** - Changed default from Stadia Outdoors to Carto Voyager
+  - Stadia Maps requires domain registration for production use
+  - Carto basemaps work without domain restrictions
+
+---
+
 ## [1.2.2] - 2025-11-30
 
 ### 🐛 Bug Fix
