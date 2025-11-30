@@ -83,7 +83,8 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         type: 'raster',
         source: 'plate-boundaries',
         paint: {
-          'raster-opacity': 0.7,
+          'raster-opacity': 1,
+          'raster-resampling': 'nearest',
         },
       });
 

@@ -33,6 +33,5 @@ export const MAP_STYLES = {
 } as const;
 
 export type MapStyleKey = keyof typeof MAP_STYLES;
-// Default to Carto Voyager - works without domain registration
-// Stadia maps require domain registration at https://client.stadiamaps.com/
-export const DEFAULT_STYLE: MapStyleKey = 'cartoVoyager';
+// Stadia Outdoors - requires domain registration at https://client.stadiamaps.com/
+export const DEFAULT_STYLE: MapStyleKey = 'stadiaOutdoors';

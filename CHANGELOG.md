@@ -5,6 +5,18 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2025-11-30
+
+### 🎯 Improvements
+
+### Changed
+- **Default Basemap** - Restored to Stadia Outdoors (domain now registered)
+- **Plate Boundaries Layer** - Improved rendering:
+  - Changed opacity from 0.7 to 1.0 for sharper lines
+  - Set resampling to 'nearest' to reduce blur artifacts
+
+---
+
 ## [1.2.3] - 2025-11-30
 
 ### 🐛 Bug Fix
