@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePlaybackStore } from '../../stores/playbackStore';
 import type { DataRangePreset } from '../../services/tremor-api';
-import { getPresetDateRange, setCustomDateRange } from '../../services/tremor-api';
+import { getPresetDateRange } from '../../services/tremor-api';
 
 interface DataRangeSelectorProps {
   isLoading?: boolean;
@@ -21,15 +21,25 @@ const presetOptions: PresetOption[] = [
   { value: 'custom', label: 'Custom Range', mobileLabel: 'Custom' },
 ];
 
+// Get today's date in YYYY-MM-DD format (local timezone)
+const getTodayString = (): string => {
+  const today = new Date();
+  return today.getFullYear() + '-' + 
+    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+    String(today.getDate()).padStart(2, '0');
+};
+
 export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading = false }) => {
   const dataRangePreset = usePlaybackStore((state) => state.dataRangePreset);
   const setDataRangePreset = usePlaybackStore((state) => state.setDataRangePreset);
+  const setCustomDateRange = usePlaybackStore((state) => state.setCustomDateRange);
   const isPlaying = usePlaybackStore((state) => state.isPlaying);
   const pause = usePlaybackStore((state) => state.pause);
   
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   // Mobile detection with orientation change support
   const [isMobile, setIsMobile] = useState(() => 
@@ -48,6 +58,14 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
     };
   }, []);
 
+  // Clear validation error when dates change
+  useEffect(() => {
+    setValidationError(null);
+  }, [customStart, customEnd]);
+
+  // Get the current custom date range from store
+  const storeCustomDateRange = usePlaybackStore((state) => state.customDateRange);
+
   const handlePresetChange = (preset: DataRangePreset) => {
     // Pause playback when changing data range
     if (isPlaying) {
@@ -55,41 +73,73 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
     }
     
     if (preset === 'custom') {
-      // Initialize custom dates with current preset's dates
-      const { starttime, endtime } = getPresetDateRange(dataRangePreset);
-      setCustomStart(starttime.split('T')[0]);
-      setCustomEnd(endtime.split('T')[0]);
+      // If we already have a custom range in the store, use it
+      // Otherwise initialize from current preset's dates
+      if (dataRangePreset === 'custom' && storeCustomDateRange) {
+        setCustomStart(storeCustomDateRange.starttime.split('T')[0]);
+        setCustomEnd(storeCustomDateRange.endtime.split('T')[0]);
+      } else {
+        const { starttime, endtime } = getPresetDateRange(dataRangePreset);
+        // Parse dates properly - extract date portion
+        setCustomStart(starttime.split('T')[0]);
+        // For end date, use today to avoid timezone issues
+        const today = getTodayString();
+        const endDateStr = endtime.split('T')[0];
+        setCustomEnd(endDateStr > today ? today : endDateStr);
+      }
+      setValidationError(null);
       setShowCustomModal(true);
     } else {
+      // Always trigger refresh, even if same preset (setDataRangePreset increments dataVersion)
       setDataRangePreset(preset);
     }
   };
 
-  const handleCustomSubmit = () => {
-    if (customStart && customEnd) {
-      // Validate dates
-      const startDate = new Date(customStart);
-      const endDate = new Date(customEnd);
-      
-      if (startDate >= endDate) {
-        alert('Start date must be before end date');
-        return;
-      }
-      
-      // Store custom dates in the API service
-      setCustomDateRange(
-        `${customStart}T00:00:00`,
-        `${customEnd}T23:59:59`
-      );
-      
-      // Trigger data reload by setting preset
-      setDataRangePreset('custom');
-      setShowCustomModal(false);
+  const validateDates = (): string | null => {
+    if (!customStart || !customEnd) {
+      return 'Please select both start and end dates';
     }
+    
+    const today = getTodayString();
+    
+    // Check for future dates
+    if (customStart > today) {
+      return 'Start date cannot be in the future';
+    }
+    if (customEnd > today) {
+      return 'End date cannot be in the future';
+    }
+    
+    // Check date order (same day is OK - we'll use full day range)
+    if (customStart > customEnd) {
+      return 'Start date must be before or equal to end date';
+    }
+    
+    return null;
+  };
+
+  const handleCustomSubmit = () => {
+    const error = validateDates();
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    
+    // Store custom dates in the Zustand store
+    // For same-day selection, use full day (00:00:00 to 23:59:59)
+    setCustomDateRange({
+      starttime: `${customStart}T00:00:00`,
+      endtime: `${customEnd}T23:59:59`
+    });
+    
+    // Trigger data reload by setting preset (this increments dataVersion)
+    setDataRangePreset('custom');
+    setShowCustomModal(false);
   };
 
   const handleCustomCancel = () => {
     setShowCustomModal(false);
+    setValidationError(null);
   };
 
   return (
@@ -193,6 +243,21 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
             }}>
               Custom Date Range
             </h3>
+
+            {/* Validation Error */}
+            {validationError && (
+              <div style={{
+                marginBottom: '16px',
+                padding: '10px 12px',
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                borderRadius: '6px',
+                color: '#f87171',
+                fontSize: '13px',
+              }}>
+                {validationError}
+              </div>
+            )}
             
             <div style={{ marginBottom: '16px' }}>
               <label style={{
@@ -207,6 +272,7 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
               <input
                 type="date"
                 value={customStart}
+                max={getTodayString()}
                 onChange={(e) => setCustomStart(e.target.value)}
                 style={{
                   width: '100%',
@@ -234,6 +300,7 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
               <input
                 type="date"
                 value={customEnd}
+                max={getTodayString()}
                 onChange={(e) => setCustomEnd(e.target.value)}
                 style={{
                   width: '100%',

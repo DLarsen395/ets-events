@@ -11,8 +11,15 @@ export interface TremorAPIParams {
 }
 
 // Format date for API (ISO 8601 format required by PNSN API)
+// Use local timezone to ensure dates match user's expectation
 const formatDateForAPI = (date: Date): string => {
-  return date.toISOString().split('.')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 };
 
 // Fetch tremor events from PNSN API

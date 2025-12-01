@@ -1,11 +1,48 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import type { ETSEvent } from '../../types/event';
 import type { ETSEventWithOpacity } from '../../hooks/usePlayback';
 import { MAP_STYLES, type MapStyleKey } from '../../config/mapStyles';
 
-// USGS Plate Boundaries tile service
-const PLATE_BOUNDARIES_TILES = 'https://earthquake.usgs.gov/arcgis/rest/services/eq/map_plateboundaries/MapServer/tile/{z}/{y}/{x}';
+// USGS Plate Boundaries GeoJSON endpoint (vector data - always crisp at any zoom)
+// Using resultOffset for pagination since maxRecordCount is 1000 but there are 1175+ features
+const PLATE_BOUNDARIES_BASE_URL = 'https://earthquake.usgs.gov/arcgis/rest/services/eq/map_plateboundaries/MapServer/1/query';
+
+// Cache for plate boundaries data (fetched once, reused across style changes)
+let plateBoundariesCache: GeoJSON.FeatureCollection | null = null;
+
+// Fetch all plate boundaries with pagination
+async function fetchAllPlateBoundaries(): Promise<GeoJSON.FeatureCollection> {
+  const allFeatures: GeoJSON.Feature[] = [];
+  let offset = 0;
+  const batchSize = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    const url = `${PLATE_BOUNDARIES_BASE_URL}?where=1%3D1&outFields=LABEL&f=geojson&outSR=4326&resultOffset=${offset}&resultRecordCount=${batchSize}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch plate boundaries: ${response.status}`);
+    }
+    const data: GeoJSON.FeatureCollection = await response.json();
+    
+    if (data.features && data.features.length > 0) {
+      allFeatures.push(...data.features);
+      offset += data.features.length;
+      // If we got fewer than requested, we've reached the end
+      hasMore = data.features.length === batchSize;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  console.log(`Plate boundaries loaded: ${allFeatures.length} features (paginated)`);
+  
+  return {
+    type: 'FeatureCollection',
+    features: allFeatures,
+  };
+}
 
 interface MapContainerProps {
   events: ETSEventWithOpacity[];
@@ -22,34 +59,103 @@ export const MapContainer: React.FC<MapContainerProps> = ({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  
+  // Track current style to detect changes
   const currentStyleRef = useRef(currentStyle);
+  // Track if we're in the middle of a style change
+  const isStyleChanging = useRef(false);
+  // Track if layers have been added
+  const layersInitialized = useRef(false);
 
-  // Add custom layers (plate boundaries + events)
-  const addCustomLayers = (mapInstance: maplibregl.Map, eventsData: ETSEventWithOpacity[], showBoundaries: boolean) => {
-    // Add plate boundaries layer
-    if (!mapInstance.getSource('plate-boundaries')) {
+  // Safe cleanup of all custom layers/sources
+  const cleanupLayers = useCallback((mapInstance: maplibregl.Map) => {
+    try {
+      // Remove layers first (must be done before sources)
+      if (mapInstance.getLayer('events-circle')) {
+        mapInstance.removeLayer('events-circle');
+      }
+      if (mapInstance.getLayer('plate-boundaries-layer')) {
+        mapInstance.removeLayer('plate-boundaries-layer');
+      }
+      // Then remove sources
+      if (mapInstance.getSource('events')) {
+        mapInstance.removeSource('events');
+      }
+      if (mapInstance.getSource('plate-boundaries')) {
+        mapInstance.removeSource('plate-boundaries');
+      }
+    } catch (e) {
+      // Ignore errors during cleanup
+      console.log('Cleanup warning (can be ignored):', e);
+    }
+    layersInitialized.current = false;
+  }, []);
+
+  // Add plate boundaries layer (vector GeoJSON for crisp rendering at all zoom levels)
+  const addPlateBoundariesLayer = useCallback(async (mapInstance: maplibregl.Map, visible: boolean) => {
+    if (mapInstance.getSource('plate-boundaries')) return;
+    
+    try {
+      // Fetch GeoJSON data if not cached (uses pagination to get ALL features)
+      if (!plateBoundariesCache) {
+        console.log('Fetching plate boundaries GeoJSON (paginated)...');
+        plateBoundariesCache = await fetchAllPlateBoundaries();
+      }
+
+      // Guard against null (should never happen after successful fetch)
+      if (!plateBoundariesCache) {
+        throw new Error('Failed to load plate boundaries data');
+      }
+
+      // Add as GeoJSON source (vector data)
       mapInstance.addSource('plate-boundaries', {
-        type: 'raster',
-        tiles: [PLATE_BOUNDARIES_TILES],
-        tileSize: 256,
-        attribution: '© USGS Earthquake Hazards Program',
+        type: 'geojson',
+        data: plateBoundariesCache,
       });
 
+      // Add line layer for plate boundaries (crisp at any zoom level)
       mapInstance.addLayer({
         id: 'plate-boundaries-layer',
-        type: 'raster',
+        type: 'line',
         source: 'plate-boundaries',
         paint: {
-          'raster-opacity': 0.8,
+          // Color based on boundary type
+          'line-color': [
+            'match',
+            ['get', 'LABEL'],
+            'Convergent Boundary', '#ff4444',  // Red for subduction
+            'Divergent Boundary', '#44ff44',   // Green for spreading
+            'Transform Boundary', '#ffaa00',   // Orange for transform
+            '#ff6666'  // Default red
+          ],
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,    // Width 1 at zoom 0
+            5, 1.5,  // Width 1.5 at zoom 5
+            10, 2,   // Width 2 at zoom 10
+            15, 3    // Width 3 at zoom 15
+          ],
+          'line-opacity': 0.9,
         },
         layout: {
-          visibility: showBoundaries ? 'visible' : 'none',
+          visibility: visible ? 'visible' : 'none',
+          'line-cap': 'round',
+          'line-join': 'round',
         },
       });
+    } catch (e) {
+      console.error('Error adding plate boundaries layer:', e);
     }
+  }, []);
 
-    // Add events source and layer
-    if (eventsData.length > 0 && !mapInstance.getSource('events')) {
+  // Add events layer
+  const addEventsLayer = useCallback((mapInstance: maplibregl.Map, eventsData: ETSEventWithOpacity[]) => {
+    if (eventsData.length === 0) return;
+    if (mapInstance.getSource('events')) return;
+
+    try {
       const geojsonData: GeoJSON.FeatureCollection = {
         type: 'FeatureCollection',
         features: eventsData.map(event => ({
@@ -129,10 +235,27 @@ export const MapContainer: React.FC<MapContainerProps> = ({
           `)
           .addTo(mapInstance);
       });
+    } catch (e) {
+      console.error('Error adding events layer:', e);
     }
-  };
+  }, []);
 
-  // Initialize map
+  // Initialize all custom layers
+  const initializeLayers = useCallback(async (mapInstance: maplibregl.Map, eventsData: ETSEventWithOpacity[], showBoundaries: boolean) => {
+    // Always clean up first to ensure fresh state
+    cleanupLayers(mapInstance);
+    
+    // Add plate boundaries first (below events)
+    await addPlateBoundariesLayer(mapInstance, showBoundaries);
+    // Add events on top (even if empty - we'll update data later)
+    if (eventsData.length > 0) {
+      addEventsLayer(mapInstance, eventsData);
+    }
+    
+    layersInitialized.current = true;
+  }, [addPlateBoundariesLayer, addEventsLayer, cleanupLayers]);
+
+  // Initialize map - only runs once
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
@@ -151,7 +274,7 @@ export const MapContainer: React.FC<MapContainerProps> = ({
         currentStyleRef.current = currentStyle;
 
         mapInstance.on('load', () => {
-          addCustomLayers(mapInstance, events, showPlateBoundaries);
+          initializeLayers(mapInstance, events, showPlateBoundaries);
           setMapLoaded(true);
         });
 
@@ -178,66 +301,92 @@ export const MapContainer: React.FC<MapContainerProps> = ({
 
     return () => {
       clearTimeout(timer);
-      mapRef.current?.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      layersInitialized.current = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle style changes
+  // Handle style changes - completely reinitialize layers
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded) return;
-    if (currentStyle === currentStyleRef.current) return;
-
     const mapInstance = mapRef.current;
+    if (!mapInstance || !mapLoaded) return;
+    if (currentStyle === currentStyleRef.current) return;
+    if (isStyleChanging.current) return;
+
+    isStyleChanging.current = true;
     currentStyleRef.current = currentStyle;
 
-    // Save current view
+    // Save current view state
     const center = mapInstance.getCenter();
     const zoom = mapInstance.getZoom();
     const bearing = mapInstance.getBearing();
     const pitch = mapInstance.getPitch();
 
-    // Capture current state for closure
+    // Capture current data for closure
     const currentEvents = [...events];
     const currentShowBoundaries = showPlateBoundaries;
 
+    // Clean up existing layers before style change
+    cleanupLayers(mapInstance);
+
+    // Change the style
     mapInstance.setStyle(MAP_STYLES[currentStyle].url);
 
-    mapInstance.once('style.load', () => {
+    // Wait for style to fully load before adding layers
+    const handleStyleData = () => {
+      if (!mapInstance.isStyleLoaded()) return;
+      
+      // Remove this listener
+      mapInstance.off('styledata', handleStyleData);
+      
       // Restore view
       mapInstance.setCenter(center);
       mapInstance.setZoom(zoom);
       mapInstance.setBearing(bearing);
       mapInstance.setPitch(pitch);
 
-      // Re-add custom layers
-      addCustomLayers(mapInstance, currentEvents, currentShowBoundaries);
-    });
-  }, [currentStyle, mapLoaded, events, showPlateBoundaries]);
+      // Small delay to ensure style internals are ready
+      setTimeout(() => {
+        // Re-add all layers
+        initializeLayers(mapInstance, currentEvents, currentShowBoundaries);
+        isStyleChanging.current = false;
+      }, 50);
+    };
 
-  // Toggle plate boundaries visibility
+    mapInstance.on('styledata', handleStyleData);
+
+  }, [currentStyle, mapLoaded, events, showPlateBoundaries, cleanupLayers, initializeLayers]);
+
+  // Toggle plate boundaries visibility - simple visibility change only
   useEffect(() => {
     const mapInstance = mapRef.current;
-    if (!mapInstance || !mapLoaded) return;
+    if (!mapInstance || !mapLoaded || isStyleChanging.current) return;
 
-    try {
-      if (mapInstance.getLayer('plate-boundaries-layer')) {
+    const layer = mapInstance.getLayer('plate-boundaries-layer');
+    if (layer) {
+      try {
         mapInstance.setLayoutProperty(
           'plate-boundaries-layer',
           'visibility',
           showPlateBoundaries ? 'visible' : 'none'
         );
+      } catch (e) {
+        console.warn('Could not toggle plate boundaries visibility:', e);
       }
-    } catch {
-      // Layer might not exist yet
+    } else if (showPlateBoundaries && layersInitialized.current) {
+      // Layer should exist but doesn't - re-add it
+      addPlateBoundariesLayer(mapInstance, true);
     }
-  }, [showPlateBoundaries, mapLoaded]);
+  }, [showPlateBoundaries, mapLoaded, addPlateBoundariesLayer]);
 
-  // Update events data
+  // Update events data - just update the source data
   useEffect(() => {
     const mapInstance = mapRef.current;
-    if (!mapInstance || !mapLoaded || events.length === 0) return;
+    if (!mapInstance || !mapLoaded || isStyleChanging.current) return;
 
     const geojsonData: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
@@ -255,11 +404,14 @@ export const MapContainer: React.FC<MapContainerProps> = ({
       const source = mapInstance.getSource('events') as maplibregl.GeoJSONSource | undefined;
       if (source) {
         source.setData(geojsonData);
+      } else if (layersInitialized.current && events.length > 0) {
+        // Source doesn't exist but should - add it
+        addEventsLayer(mapInstance, events);
       }
     } catch (e) {
-      console.log('Error updating events:', e);
+      console.warn('Error updating events:', e);
     }
-  }, [events, mapLoaded]);
+  }, [events, mapLoaded, addEventsLayer]);
 
   return (
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>

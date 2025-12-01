@@ -17,6 +17,12 @@ export const getFadeOutDuration = (speed: PlaybackSpeed): number => {
   return maxFade - t * (maxFade - minFade);
 };
 
+// Custom date range stored in state for reactivity
+export interface CustomDateRange {
+  starttime: string;
+  endtime: string;
+}
+
 interface PlaybackState {
   // Playback controls
   isPlaying: boolean;
@@ -31,6 +37,8 @@ interface PlaybackState {
   
   // Data range
   dataRangePreset: DataRangePreset;
+  customDateRange: CustomDateRange | null;
+  dataVersion: number; // Increment to force refetch even if preset unchanged
   
   // Display settings
   showAllEvents: boolean;  // toggle between playback mode and show-all mode
@@ -46,6 +54,8 @@ interface PlaybackState {
   setRangeEnd: (time: Date) => void;
   setShowAllEvents: (show: boolean) => void;
   setDataRangePreset: (preset: DataRangePreset) => void;
+  setCustomDateRange: (range: CustomDateRange) => void;
+  forceRefetch: () => void;
   reset: () => void;
 }
 
@@ -59,6 +69,8 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
   rangeStart: null,
   rangeEnd: null,
   dataRangePreset: 'lastWeek', // Default to last week
+  customDateRange: null,
+  dataVersion: 0,
   showAllEvents: true, // Start showing all events
   
   // Actions
@@ -105,7 +117,12 @@ export const usePlaybackStore = create<PlaybackState>((set) => ({
     currentTime: state.currentTime && state.currentTime > rangeEnd ? rangeEnd : state.currentTime
   })),
   setShowAllEvents: (showAllEvents) => set({ showAllEvents, isPlaying: false }),
-  setDataRangePreset: (dataRangePreset) => set({ dataRangePreset }),
+  setDataRangePreset: (dataRangePreset) => set((state) => ({ 
+    dataRangePreset,
+    dataVersion: state.dataVersion + 1 // Force refetch even if preset same
+  })),
+  setCustomDateRange: (customDateRange) => set({ customDateRange }),
+  forceRefetch: () => set((state) => ({ dataVersion: state.dataVersion + 1 })),
   reset: () => set((state) => ({ 
     isPlaying: false, 
     currentTime: state.rangeStart || state.startTime

@@ -3,7 +3,7 @@
 An interactive web application for visualizing Pacific Northwest ETS (Episodic Tremor and Slip) seismic events with real-time playback, live data integration, and mobile-responsive design.
 
 ![ETS Events Map](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.1.0-blue)
+![Version](https://img.shields.io/badge/Version-1.2.6-blue)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
@@ -200,11 +200,11 @@ docker run -d -p 8080:80 --name ets-events-test ets-events:latest
 echo $PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 
 # Tag with version AND latest
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:1.1.0
+docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:1.2.6
 docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
 
 # Push both tags
-docker push ghcr.io/dlarsen395/ets-events:1.1.0
+docker push ghcr.io/dlarsen395/ets-events:1.2.6
 docker push ghcr.io/dlarsen395/ets-events:latest
 ```
 
@@ -222,7 +222,7 @@ version: "3.8"
 
 services:
   ets-events:
-    image: ghcr.io/dlarsen395/ets-events:1.1.0  # Pin to specific version
+    image: ghcr.io/dlarsen395/ets-events:1.2.6  # Pin to specific version
     networks:
       - npm-proxy
     deploy:
@@ -244,6 +244,15 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 
 ## 🗺️ Roadmap
 
+### ✅ Completed (V1.2.6)
+- [x] **Vector plate boundaries** - Switched from raster tiles to GeoJSON vectors for crisp lines at all zoom levels
+- [x] **Paginated data fetch** - Fetches all 1175+ plate boundary features via pagination
+- [x] **Color-coded boundaries** - Convergent (red), Divergent (green), Transform (orange)
+- [x] **Zoom-responsive line width** - Lines scale appropriately with zoom level
+- [x] **Multiple basemap options** - Carto Voyager, Stadia OSM Bright, Stamen Terrain, Outdoors, Alidade Smooth/Dark
+- [x] **Data range fixes** - Fixed preset buttons, custom date validation, timezone handling
+- [x] **Responsive right panel** - Flexbox layout with accordion collapse on short screens
+
 ### ✅ Completed (V1.1.0)
 - [x] MapLibre GL JS (free, no API key)
 - [x] USGS Tectonic Plate Boundaries overlay
@@ -262,10 +271,10 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 - [x] Nginx Proxy Manager integration
 - [x] SSL and authentication support
 
-### 🔜 Next (V1.1.0)
-- [ ] User-selectable color schemes
+### 🔜 Next (V1.3.0)
+- [ ] User-selectable event color schemes
 - [ ] Keyboard shortcuts
-- [ ] Event details popup on click
+- [ ] Enhanced event details popup
 
 ### 🔮 Future (V2.0.0)
 - [ ] Event clustering at low zoom levels

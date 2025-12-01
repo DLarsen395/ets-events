@@ -9,6 +9,8 @@ export const useEventData = () => {
   const [error, setError] = useState<string | null>(null);
   
   const dataRangePreset = usePlaybackStore((state) => state.dataRangePreset);
+  const customDateRange = usePlaybackStore((state) => state.customDateRange);
+  const dataVersion = usePlaybackStore((state) => state.dataVersion);
   const setSpeed = usePlaybackStore((state) => state.setSpeed);
   const setTimeRange = usePlaybackStore((state) => state.setTimeRange);
 
@@ -18,8 +20,10 @@ export const useEventData = () => {
         setIsLoading(true);
         setError(null);
         
-        // Get date range for preset
-        const { starttime, endtime } = getPresetDateRange(dataRangePreset);
+        // Get date range for preset (use store's custom range for 'custom' preset)
+        const { starttime, endtime } = dataRangePreset === 'custom' && customDateRange
+          ? customDateRange
+          : getPresetDateRange(dataRangePreset);
         
         // Fetch from PNSN Tremor API
         const data = await fetchTremorEvents({ starttime, endtime });
@@ -43,8 +47,10 @@ export const useEventData = () => {
           setTimeRange(minTime, maxTime);
         } else {
           // No events - use the requested date range
-          const { starttime, endtime } = getPresetDateRange(dataRangePreset);
-          setTimeRange(new Date(starttime), new Date(endtime));
+          const range = dataRangePreset === 'custom' && customDateRange
+            ? customDateRange
+            : getPresetDateRange(dataRangePreset);
+          setTimeRange(new Date(range.starttime), new Date(range.endtime));
         }
         
       } catch (err) {
@@ -56,7 +62,7 @@ export const useEventData = () => {
     };
 
     loadEvents();
-  }, [dataRangePreset, setSpeed, setTimeRange]);
+  }, [dataRangePreset, customDateRange, dataVersion, setSpeed, setTimeRange]);
 
   return { events, isLoading, error };
 };
