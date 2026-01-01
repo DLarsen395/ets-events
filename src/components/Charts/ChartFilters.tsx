@@ -3,7 +3,12 @@
  */
 
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
-import { MAGNITUDE_FILTERS, TIME_RANGE_OPTIONS, REGION_SCOPE_OPTIONS } from '../../types/earthquake';
+import { 
+  MIN_MAGNITUDE_OPTIONS, 
+  MAX_MAGNITUDE_OPTIONS,
+  TIME_RANGE_OPTIONS, 
+  REGION_SCOPE_OPTIONS 
+} from '../../types/earthquake';
 import type { ChartLibrary } from '../../types/earthquake';
 
 const selectStyle: React.CSSProperties = {
@@ -15,7 +20,7 @@ const selectStyle: React.CSSProperties = {
   borderRadius: '0.375rem',
   cursor: 'pointer',
   outline: 'none',
-  minWidth: '140px',
+  minWidth: '100px',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -28,10 +33,12 @@ const labelStyle: React.CSSProperties = {
 export function ChartFilters() {
   const {
     minMagnitude,
+    maxMagnitude,
     timeRange,
     regionScope,
     chartLibrary,
     setMinMagnitude,
+    setMaxMagnitude,
     setTimeRange,
     setRegionScope,
     setChartLibrary,
@@ -71,24 +78,45 @@ export function ChartFilters() {
         </select>
       </div>
 
-      {/* Magnitude Filter */}
+      {/* Min Magnitude Filter */}
       <div>
         <label style={labelStyle}>Min Magnitude</label>
         <select
-          value={minMagnitude ?? 'all'}
-          onChange={(e) => {
-            const value = e.target.value;
-            setMinMagnitude(value === 'all' ? null : parseFloat(value));
-          }}
+          value={minMagnitude}
+          onChange={(e) => setMinMagnitude(parseFloat(e.target.value))}
           disabled={isLoading}
           style={{
             ...selectStyle,
             opacity: isLoading ? 0.5 : 1,
           }}
         >
-          {MAGNITUDE_FILTERS.map((filter) => (
-            <option key={filter.label} value={filter.value ?? 'all'}>
-              {filter.label}
+          {MIN_MAGNITUDE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}+
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Max Magnitude Filter */}
+      <div>
+        <label style={labelStyle}>Max Magnitude</label>
+        <select
+          value={maxMagnitude}
+          onChange={(e) => setMaxMagnitude(parseFloat(e.target.value))}
+          disabled={isLoading}
+          style={{
+            ...selectStyle,
+            opacity: isLoading ? 0.5 : 1,
+          }}
+        >
+          {MAX_MAGNITUDE_OPTIONS.map((option) => (
+            <option 
+              key={option.value} 
+              value={option.value}
+              disabled={option.value < minMagnitude}
+            >
+              {option.label}
             </option>
           ))}
         </select>

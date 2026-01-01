@@ -8,9 +8,11 @@ import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
 import { ChartJSBarChart } from './ChartJSBarChart';
+import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
 
 export function EarthquakeChartsPage() {
   const {
+    earthquakes,
     dailyAggregates,
     chartLibrary,
     isLoading,
@@ -20,6 +22,7 @@ export function EarthquakeChartsPage() {
     refreshData,
     regionScope,
     minMagnitude,
+    maxMagnitude,
   } = useEarthquakeStore();
 
   // Fetch data on mount if not already loaded
@@ -33,9 +36,16 @@ export function EarthquakeChartsPage() {
   const getChartTitle = () => {
     const parts = [];
     parts.push('Earthquakes per Day');
-    if (minMagnitude !== null) {
-      parts.push(`(M${minMagnitude}+)`);
+    
+    // Build magnitude range string
+    const minStr = `M${minMagnitude}`;
+    const maxStr = maxMagnitude >= 10 ? 'M9+' : `M${maxMagnitude}`;
+    if (minMagnitude === maxMagnitude) {
+      parts.push(`(${minStr})`);
+    } else {
+      parts.push(`(${minStr} to ${maxStr})`);
     }
+    
     parts.push('-');
     parts.push(regionScope === 'us' ? 'United States' : 'Worldwide');
     return parts.join(' ');
@@ -272,6 +282,15 @@ export function EarthquakeChartsPage() {
           </div>
         </div>
       </div>
+
+      {/* Magnitude Distribution Chart - Full Width */}
+      {earthquakes.length > 0 && (
+        <MagnitudeDistributionChart 
+          earthquakes={earthquakes}
+          title="Magnitude Distribution Over Time"
+          height={300}
+        />
+      )}
 
       {/* CSS for spin animation */}
       <style>{`

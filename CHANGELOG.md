@@ -5,6 +5,41 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-01-02
+
+### 🌍 Earthquake Charts Enhanced
+
+Major improvements to the Earthquake Charts feature including API robustness, new filters, and visualization enhancements.
+
+### Added
+- **Max Magnitude Filter** - Added upper bound magnitude filter (M0 to M9+)
+  - Works alongside existing Min Magnitude filter for precise range selection
+  - Default changed to M4+ to M9+ for more relevant data
+- **Magnitude Distribution Chart** - New stacked area chart showing earthquake counts by magnitude range over time
+  - Configurable time grouping: By Week, By Month, By Year
+  - Toggle individual magnitude ranges on/off
+  - Quick selection buttons: All, None, M4+
+  - Custom tooltip showing breakdown by magnitude
+- **Dynamic Bar Width** - Charts now automatically adjust bar thickness based on data density
+  - Thinner bars for larger date ranges (365 days = 3-4px bars)
+  - Wider bars for smaller date ranges (7 days = 40-60px bars)
+- **Chunked API Fetching** - Robust fetching for large date ranges to avoid USGS API limits
+  - Adaptive chunk sizes based on magnitude filter (M5+ = 365 days/chunk, M2+ = 30 days/chunk)
+  - 300ms delay between chunks to respect rate limits
+  - Automatic deduplication of events across chunk boundaries
+
+### Changed
+- **Default Time Range** - Changed from 30 days to 7 days for faster initial load
+- **Default Min Magnitude** - Changed from "All Magnitudes" to M4+ for more relevant data
+- **Extended Magnitude Range** - Min magnitude now supports -2 to 9 (earthquakes can have negative magnitudes)
+
+### Fixed
+- **Last Year API Error** - Fixed "Request failed" error when selecting 365-day time range
+  - Previously failed when USGS API returned 20000+ events
+  - Now uses chunked fetching to handle large result sets
+
+---
+
 ## [1.2.8] - 2025-12-31
 
 ### 📦 Docker Registry Integration

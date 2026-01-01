@@ -1,5 +1,6 @@
 /**
  * Recharts-based bar chart for earthquake data
+ * Supports dynamic bar width based on data density
  */
 
 import {
@@ -37,6 +38,39 @@ const colors = {
     text: '#f3f4f6',  // gray-100
   },
 };
+
+/**
+ * Calculate optimal bar width based on data length
+ * Thinner bars for more data points
+ */
+function getBarConfig(dataLength: number): { maxBarSize: number; barGap: number } {
+  if (dataLength <= 7) {
+    return { maxBarSize: 60, barGap: 4 };
+  } else if (dataLength <= 14) {
+    return { maxBarSize: 45, barGap: 3 };
+  } else if (dataLength <= 30) {
+    return { maxBarSize: 30, barGap: 2 };
+  } else if (dataLength <= 90) {
+    return { maxBarSize: 15, barGap: 1 };
+  } else if (dataLength <= 180) {
+    return { maxBarSize: 8, barGap: 0 };
+  } else {
+    return { maxBarSize: 4, barGap: 0 };  // Very thin for year view
+  }
+}
+
+/**
+ * Get appropriate date format based on data length
+ */
+function getDateFormat(dataLength: number): Intl.DateTimeFormatOptions {
+  if (dataLength <= 14) {
+    return { month: 'short', day: 'numeric' };
+  } else if (dataLength <= 90) {
+    return { month: 'short', day: 'numeric' };
+  } else {
+    return { month: 'short' };  // Just month for year view
+  }
+}
 
 /**
  * Custom tooltip component
@@ -84,11 +118,23 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 }
 
 export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
+  const dateFormat = getDateFormat(data.length);
+  const barConfig = getBarConfig(data.length);
+  
   // Format data with labels
   const chartData = data.map(d => ({
     ...d,
-    label: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    label: new Date(d.date).toLocaleDateString('en-US', dateFormat),
   }));
+
+  // Calculate tick interval based on data length
+  const tickInterval = data.length > 60 
+    ? Math.floor(data.length / 12)  // ~12 labels for year view
+    : data.length > 30 
+      ? Math.floor(data.length / 10)
+      : data.length > 14 
+        ? 1  // Every other day for 2 weeks
+        : 0;  // Every day for 1 week
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -107,15 +153,16 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
         <BarChart 
           data={chartData} 
           margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
+          barGap={barConfig.barGap}
         >
           <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ fill: colors.text, fontSize: 11 }}
+            tick={{ fill: colors.text, fontSize: data.length > 60 ? 10 : 11 }}
             angle={-45}
             textAnchor="end"
             height={60}
-            interval={data.length > 14 ? Math.floor(data.length / 10) : 0}
+            interval={tickInterval}
             tickLine={{ stroke: colors.grid }}
             axisLine={{ stroke: colors.grid }}
           />
@@ -135,8 +182,8 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
           <Bar
             dataKey="count"
             fill={colors.bar}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={50}
+            radius={data.length > 90 ? [2, 2, 0, 0] : [4, 4, 0, 0]}
+            maxBarSize={barConfig.maxBarSize}
           />
         </BarChart>
       </ResponsiveContainer>

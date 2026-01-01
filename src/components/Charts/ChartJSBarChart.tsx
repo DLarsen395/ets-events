@@ -1,5 +1,6 @@
 /**
  * Chart.js-based bar chart for earthquake data
+ * Supports dynamic bar width based on data density
  */
 
 import {
@@ -37,11 +38,35 @@ const colors = {
   },
 };
 
+/**
+ * Get bar thickness based on data length
+ */
+function getBarThickness(dataLength: number): number | 'flex' {
+  if (dataLength <= 7) return 40;
+  if (dataLength <= 14) return 30;
+  if (dataLength <= 30) return 20;
+  if (dataLength <= 90) return 10;
+  if (dataLength <= 180) return 5;
+  return 3;  // Very thin for year view
+}
+
+/**
+ * Get appropriate date format based on data length
+ */
+function formatLabel(date: string, dataLength: number): string {
+  const d = new Date(date);
+  if (dataLength <= 90) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  // Just month for year view
+  return d.toLocaleDateString('en-US', { month: 'short' });
+}
+
 export function ChartJSBarChart({ data, title }: ChartJSBarChartProps) {
-  // Format labels
-  const labels = data.map(d => 
-    new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  );
+  const barThickness = getBarThickness(data.length);
+  
+  // Format labels based on data density
+  const labels = data.map(d => formatLabel(d.date, data.length));
 
   const chartData = {
     labels,
@@ -51,12 +76,16 @@ export function ChartJSBarChart({ data, title }: ChartJSBarChartProps) {
         data: data.map(d => d.count),
         backgroundColor: colors.bar,
         borderColor: colors.barBorder,
-        borderWidth: 1,
-        borderRadius: 4,
+        borderWidth: data.length > 90 ? 0 : 1,  // No border for very thin bars
+        borderRadius: data.length > 90 ? 2 : 4,
         hoverBackgroundColor: colors.barHover,
+        barThickness: barThickness,
       },
     ],
   };
+
+  // Calculate max ticks based on data length
+  const maxTicksLimit = data.length > 180 ? 12 : data.length > 60 ? 15 : undefined;
 
   const options: ChartOptions<'bar'> = {
     responsive: true,
@@ -84,7 +113,19 @@ export function ChartJSBarChart({ data, title }: ChartJSBarChartProps) {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          title: (items) => items[0]?.label ?? '',
+          title: (items) => {
+            // Show full date in tooltip
+            const index = items[0]?.dataIndex;
+            if (index !== undefined && data[index]) {
+              return new Date(data[index].date).toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              });
+            }
+            return items[0]?.label ?? '';
+          },
           label: (item) => {
             const dataPoint = data[item.dataIndex];
             const lines = [`Earthquakes: ${item.raw}`];
@@ -108,10 +149,10 @@ export function ChartJSBarChart({ data, title }: ChartJSBarChartProps) {
           maxRotation: 45,
           minRotation: 45,
           font: {
-            size: 11,
+            size: data.length > 60 ? 10 : 11,
           },
           autoSkip: true,
-          maxTicksLimit: data.length > 14 ? 10 : undefined,
+          maxTicksLimit,
         },
         border: {
           color: colors.grid,
