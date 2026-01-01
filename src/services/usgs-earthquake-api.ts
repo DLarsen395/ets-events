@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      /**
+  /**
  * USGS Earthquake API Service
  *
  * Fetches earthquake data from the USGS FDSN Event API.
