@@ -2,8 +2,9 @@
  * Main container page for Earthquake Charts view
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
+import { useCacheStore } from '../../stores/cacheStore';
 import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
@@ -12,6 +13,18 @@ import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
 import { CacheProgressBanner } from './CacheProgressBanner';
 import { CacheStatusPanel } from './CacheStatusPanel';
 import { TIME_RANGE_OPTIONS } from '../../types/earthquake';
+import type { TimeGrouping } from './magnitudeDistributionUtils';
+import { TIME_GROUPING_OPTIONS, aggregateByTimePeriod } from './magnitudeDistributionUtils';
+
+/**
+ * Get smart default time grouping based on days in range
+ */
+function getSmartGrouping(days: number): TimeGrouping {
+  if (days <= 30) return 'day';
+  if (days <= 90) return 'week';
+  if (days <= 730) return 'month';
+  return 'year';
+}
 
 export function EarthquakeChartsPage() {
   const {
@@ -31,6 +44,11 @@ export function EarthquakeChartsPage() {
     customEndDate,
   } = useEarthquakeStore();
   
+  const { refreshStats, progress } = useCacheStore();
+  
+  // Time grouping for top chart
+  const [topChartGrouping, setTopChartGrouping] = useState<TimeGrouping>('day');
+  
   // Calculate days in range for smart chart defaults
   const daysInRange = useMemo(() => {
     if (timeRange === 'custom' && customStartDate && customEndDate) {
@@ -39,6 +57,22 @@ export function EarthquakeChartsPage() {
     const option = TIME_RANGE_OPTIONS.find(o => o.value === timeRange);
     return option?.days || 30;
   }, [timeRange, customStartDate, customEndDate]);
+  
+  // Update top chart grouping when date range changes
+  useEffect(() => {
+    setTopChartGrouping(getSmartGrouping(daysInRange));
+  }, [daysInRange]);
+  
+  // Refresh cache stats when loading state changes (for real-time cache updates)
+  useEffect(() => {
+    if (progress.operation !== 'idle') {
+      // Refresh stats periodically during fetching
+      const interval = setInterval(() => {
+        refreshStats();
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [progress.operation, refreshStats]);
 
   // Fetch data on mount if not already loaded
   useEffect(() => {
@@ -46,11 +80,21 @@ export function EarthquakeChartsPage() {
       fetchEarthquakes();
     }
   }, [fetchEarthquakes, lastFetched]);
+  
+  // Aggregate data for top chart based on selected grouping
+  const topChartData = useMemo(() => {
+    if (topChartGrouping === 'day') {
+      return dailyAggregates;
+    }
+    // Aggregate by the selected time period
+    return aggregateByTimePeriod(earthquakes, topChartGrouping);
+  }, [earthquakes, dailyAggregates, topChartGrouping]);
 
   // Build chart title
   const getChartTitle = () => {
     const parts = [];
-    parts.push('Earthquakes per Day');
+    const groupLabel = TIME_GROUPING_OPTIONS.find(o => o.value === topChartGrouping)?.label || 'Day';
+    parts.push(`Earthquakes per ${groupLabel}`);
     
     // Build magnitude range string
     const minStr = `M${minMagnitude}`;
@@ -114,6 +158,8 @@ export function EarthquakeChartsPage() {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '1rem',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
               }}
             >
               <h2
@@ -128,29 +174,28 @@ export function EarthquakeChartsPage() {
               </h2>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {/* Loading indicator for progressive updates */}
-                {isLoading && dailyAggregates.length > 0 && (
-                  <span style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.375rem',
-                    color: '#9ca3af',
-                    fontSize: '0.75rem',
-                  }}>
-                    <span
+                {/* Time grouping buttons */}
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  {TIME_GROUPING_OPTIONS.map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => setTopChartGrouping(option.value)}
                       style={{
-                        display: 'inline-block',
-                        width: '0.75rem',
-                        height: '0.75rem',
-                        border: '2px solid #374151',
-                        borderTopColor: '#60a5fa',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite',
+                        padding: '0.25rem 0.5rem',
+                        fontSize: '0.75rem',
+                        color: topChartGrouping === option.value ? '#111827' : '#9ca3af',
+                        backgroundColor: topChartGrouping === option.value ? '#60a5fa' : 'transparent',
+                        border: '1px solid',
+                        borderColor: topChartGrouping === option.value ? '#60a5fa' : '#374151',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}
-                    />
-                    Loading...
-                  </span>
-                )}
+                    >
+                      By {option.label}
+                    </button>
+                  ))}
+                </div>
                 
                 <button
                   onClick={refreshData}
@@ -237,18 +282,18 @@ export function EarthquakeChartsPage() {
           )}
 
           {/* Chart */}
-          {dailyAggregates.length > 0 && (
+          {topChartData.length > 0 && (
             <div style={{ flex: 1, minHeight: 300 }}>
               {chartLibrary === 'recharts' ? (
-                <RechartsBarChart data={dailyAggregates} />
+                <RechartsBarChart data={topChartData} />
               ) : (
-                <ChartJSBarChart data={dailyAggregates} />
+                <ChartJSBarChart data={topChartData} />
               )}
             </div>
           )}
 
           {/* No data state */}
-          {!isLoading && !error && dailyAggregates.length === 0 && (
+          {!isLoading && !error && topChartData.length === 0 && (
             <div
               style={{
                 flex: 1,

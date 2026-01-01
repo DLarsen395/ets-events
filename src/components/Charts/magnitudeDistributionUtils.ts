@@ -4,7 +4,8 @@
  * Helper functions and constants for magnitude distribution visualization.
  */
 
-import type { EarthquakeFeature } from '../../services/usgs-earthquake-api';
+import type { EarthquakeFeature, DailyEarthquakeAggregate } from '../../services/usgs-earthquake-api';
+import { calculateSeismicEnergy } from '../../services/usgs-earthquake-api';
 
 // =============================================================================
 // Types
@@ -296,4 +297,76 @@ export function getMagnitudeDistributionStats(
     avgPerPeriod: data.length > 0 ? Math.round(totalEvents / data.length) : 0,
     periodCount: data.length,
   };
+}
+/**
+ * Aggregate earthquakes by time period (week, month, year)
+ * Returns data in the same format as DailyEarthquakeAggregate for use with bar charts
+ * 
+ * @param earthquakes - Array of earthquake features from USGS API
+ * @param grouping - How to group time periods (day, week, month, or year)
+ * @returns Aggregated data points matching DailyEarthquakeAggregate format
+ */
+export function aggregateByTimePeriod(
+  earthquakes: EarthquakeFeature[],
+  grouping: TimeGrouping
+): DailyEarthquakeAggregate[] {
+  // For day grouping, this would be redundant, but we handle it anyway
+  
+  // Map to store aggregations: periodKey -> { magnitudes, energies }
+  const aggregations = new Map<string, { magnitudes: number[]; energies: number[] }>();
+  
+  // Process each earthquake
+  for (const eq of earthquakes) {
+    const magnitude = eq.properties.mag ?? 0;
+    const energy = calculateSeismicEnergy(magnitude);
+    
+    const date = new Date(eq.properties.time);
+    const periodKey = getPeriodKey(date, grouping);
+    
+    if (!aggregations.has(periodKey)) {
+      aggregations.set(periodKey, { magnitudes: [], energies: [] });
+    }
+    
+    const periodData = aggregations.get(periodKey)!;
+    periodData.magnitudes.push(magnitude);
+    periodData.energies.push(energy);
+  }
+  
+  // Convert to DailyEarthquakeAggregate format
+  const result: DailyEarthquakeAggregate[] = [];
+  
+  for (const [periodKey, data] of aggregations) {
+    const { magnitudes, energies } = data;
+    const count = magnitudes.length;
+    
+    // Use reduce instead of Math.max/min spread to avoid stack overflow
+    const maxMagnitude = magnitudes.reduce((max, m) => m > max ? m : max, magnitudes[0]);
+    const minMagnitude = magnitudes.reduce((min, m) => m < min ? m : min, magnitudes[0]);
+    
+    const periodDate = getDateFromPeriodKey(periodKey, grouping);
+    const dateLabel = formatPeriodLabel(periodDate, grouping);
+    
+    result.push({
+      date: dateLabel,
+      count,
+      avgMagnitude: magnitudes.reduce((sum, m) => sum + m, 0) / count,
+      maxMagnitude,
+      minMagnitude,
+      totalEnergy: energies.reduce((sum, e) => sum + e, 0),
+    });
+  }
+  
+  // Sort by the original period key to maintain chronological order
+  const sortedKeys = Array.from(aggregations.keys()).sort();
+  const keyToIndex = new Map(sortedKeys.map((k, i) => [k, i]));
+  
+  // Re-sort based on the original period keys
+  result.sort((a, b) => {
+    // Find the original keys for these results
+    const aKey = sortedKeys.find(k => formatPeriodLabel(getDateFromPeriodKey(k, grouping), grouping) === a.date);
+    const bKey = sortedKeys.find(k => formatPeriodLabel(getDateFromPeriodKey(k, grouping), grouping) === b.date);
+    return (keyToIndex.get(aKey!) || 0) - (keyToIndex.get(bKey!) || 0);
+  });
+  
+  return result;
 }

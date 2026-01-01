@@ -671,13 +671,17 @@ export function aggregateEarthquakesByDay(
     const { magnitudes, energies } = data;
     const count = magnitudes.length;
 
+    // Use reduce instead of Math.max/min spread to avoid stack overflow with large arrays
+    const maxMagnitude = magnitudes.reduce((max, m) => m > max ? m : max, magnitudes[0]);
+    const minMagnitude = magnitudes.reduce((min, m) => m < min ? m : min, magnitudes[0]);
+
     aggregates.push({
       date,
       count,
       avgMagnitude:
         magnitudes.reduce((sum, m) => sum + m, 0) / count,
-      maxMagnitude: Math.max(...magnitudes),
-      minMagnitude: Math.min(...magnitudes),
+      maxMagnitude,
+      minMagnitude,
       totalEnergy: energies.reduce((sum, e) => sum + e, 0),
     });
   }
@@ -787,24 +791,44 @@ export function getEarthquakeSummary(earthquakes: EarthquakeFeature[]): {
     };
   }
 
-  const magnitudes = earthquakes.map((eq) => eq.properties.mag ?? 0);
-  const depths = earthquakes.map((eq) => eq.geometry.coordinates[2]);
-  const times = earthquakes.map((eq) => eq.properties.time);
+  // Use reduce instead of Math.max/min spread to avoid stack overflow with large arrays
+  let maxMag = -Infinity;
+  let minMag = Infinity;
+  let sumMag = 0;
+  let maxDepth = -Infinity;
+  let sumDepth = 0;
+  let minTime = Infinity;
+  let maxTime = -Infinity;
+  let largestEvent: EarthquakeFeature | null = null;
 
-  const maxMag = Math.max(...magnitudes);
-  const largestEvent =
-    earthquakes.find((eq) => eq.properties.mag === maxMag) ?? null;
+  for (const eq of earthquakes) {
+    const mag = eq.properties.mag ?? 0;
+    const depth = eq.geometry.coordinates[2];
+    const time = eq.properties.time;
+
+    sumMag += mag;
+    sumDepth += depth;
+
+    if (mag > maxMag) {
+      maxMag = mag;
+      largestEvent = eq;
+    }
+    if (mag < minMag) minMag = mag;
+    if (depth > maxDepth) maxDepth = depth;
+    if (time < minTime) minTime = time;
+    if (time > maxTime) maxTime = time;
+  }
 
   return {
     total: earthquakes.length,
-    avgMagnitude: magnitudes.reduce((a, b) => a + b, 0) / magnitudes.length,
+    avgMagnitude: sumMag / earthquakes.length,
     maxMagnitude: maxMag,
-    minMagnitude: Math.min(...magnitudes),
-    avgDepth: depths.reduce((a, b) => a + b, 0) / depths.length,
-    maxDepth: Math.max(...depths),
+    minMagnitude: minMag,
+    avgDepth: sumDepth / earthquakes.length,
+    maxDepth,
     dateRange: {
-      start: new Date(Math.min(...times)),
-      end: new Date(Math.max(...times)),
+      start: new Date(minTime),
+      end: new Date(maxTime),
     },
     largestEvent,
   };
