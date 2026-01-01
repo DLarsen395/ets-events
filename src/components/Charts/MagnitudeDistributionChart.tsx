@@ -1,4 +1,4 @@
-                                                                                                                                        /**
+                                                                                                                                                                                  /**
  * Magnitude Distribution Over Time Chart
  * 
  * Shows earthquake counts by magnitude range over configurable time periods.

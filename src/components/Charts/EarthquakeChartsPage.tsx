@@ -9,6 +9,8 @@ import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
 import { ChartJSBarChart } from './ChartJSBarChart';
 import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
+import { CacheProgressBanner } from './CacheProgressBanner';
+import { CacheStatusPanel } from './CacheStatusPanel';
 
 export function EarthquakeChartsPage() {
   const {
@@ -57,14 +59,17 @@ export function EarthquakeChartsPage() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        padding: '1rem',
-        gap: '1rem',
         overflowY: 'auto',
         backgroundColor: '#111827',
       }}
     >
-      {/* Filters */}
-      <ChartFilters />
+      {/* Cache Progress Banner - shows when caching is in progress */}
+      <CacheProgressBanner />
+      
+      {/* Main content with padding */}
+      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+        {/* Filters */}
+        <ChartFilters />
 
       {/* Main content area */}
       <div
@@ -234,6 +239,9 @@ export function EarthquakeChartsPage() {
         {/* Sidebar with summary */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <EarthquakeSummary />
+          
+          {/* Cache Status Panel */}
+          <CacheStatusPanel />
 
           {/* Info card */}
           <div
@@ -291,6 +299,7 @@ export function EarthquakeChartsPage() {
           height={300}
         />
       )}
+      </div>
 
       {/* CSS for spin animation */}
       <style>{`

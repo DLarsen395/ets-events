@@ -20,6 +20,12 @@ import {
   aggregateEarthquakesByDay,
   getEarthquakeSummary,
 } from '../services/usgs-earthquake-api';
+import {
+  queryCache,
+  storeEarthquakes,
+  type CacheQuery,
+} from '../services/earthquake-cache';
+import { useCacheStore } from './cacheStore';
 
 interface EarthquakeSummary {
   total: number;
@@ -234,6 +240,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   // Fetch earthquake data based on current filters
   fetchEarthquakes: async () => {
     const { minMagnitude, maxMagnitude, timeRange, regionScope } = get();
+    const cacheStore = useCacheStore.getState();
     
     set({ isLoading: true, error: null });
     
@@ -244,19 +251,88 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
       
       console.log(`Fetching earthquakes: ${days} days, M${minMagnitude} to M${maxMagnitude}, ${regionScope}`);
       
-      // Use chunked fetching for large date ranges or low magnitude thresholds
-      const earthquakes = await fetchInChunks(
-        startTime,
-        endTime,
-        regionScope,
-        minMagnitude,
-        maxMagnitude,
-      );
+      let earthquakes: EarthquakeFeature[] = [];
+      
+      // Check cache first if enabled
+      if (cacheStore.isEnabled) {
+        const cacheQuery: CacheQuery = {
+          startDate: startTime,
+          endDate: endTime,
+          minMagnitude,
+          maxMagnitude,
+          regionScope,
+        };
+        
+        const cacheResult = await queryCache(cacheQuery);
+        
+        if (cacheResult.isComplete) {
+          // All data from cache!
+          console.log(`Cache hit: ${cacheResult.earthquakes.length} earthquakes from cache`);
+          earthquakes = cacheResult.earthquakes;
+        } else {
+          // Need to fetch missing/stale days
+          console.log(`Cache partial: ${cacheResult.cachedDays.length} cached, ${cacheResult.staleDays.length} stale`);
+          
+          // Update progress
+          cacheStore.setProgress({
+            operation: 'fetching',
+            currentStep: 0,
+            totalSteps: cacheResult.staleDays.length,
+            message: `Fetching ${cacheResult.staleDays.length} days of data...`,
+            startedAt: Date.now(),
+          });
+          
+          // Fetch missing data
+          const freshEarthquakes = await fetchInChunks(
+            startTime,
+            endTime,
+            regionScope,
+            minMagnitude,
+            maxMagnitude,
+          );
+          
+          // Store in cache
+          cacheStore.setProgress({
+            operation: 'storing',
+            currentStep: 0,
+            totalSteps: 1,
+            message: 'Caching data...',
+            startedAt: Date.now(),
+          });
+          
+          await storeEarthquakes(freshEarthquakes, cacheQuery, (progress) => {
+            cacheStore.setProgress(progress);
+          });
+          
+          earthquakes = freshEarthquakes;
+          
+          // Refresh cache stats
+          cacheStore.refreshStats();
+          
+          // Reset progress
+          cacheStore.setProgress({
+            operation: 'idle',
+            currentStep: 0,
+            totalSteps: 0,
+            message: '',
+            startedAt: null,
+          });
+        }
+      } else {
+        // Cache disabled, fetch directly
+        earthquakes = await fetchInChunks(
+          startTime,
+          endTime,
+          regionScope,
+          minMagnitude,
+          maxMagnitude,
+        );
+      }
       
       const dailyAggregates = aggregateEarthquakesByDay(earthquakes);
       const summary = getEarthquakeSummary(earthquakes);
       
-      console.log(`Fetched ${earthquakes.length} earthquakes`);
+      console.log(`Loaded ${earthquakes.length} earthquakes`);
       
       set({
         earthquakes,
@@ -271,6 +347,16 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
         error: message,
         isLoading: false,
       });
+      
+      // Reset cache progress on error
+      useCacheStore.getState().setProgress({
+        operation: 'idle',
+        currentStep: 0,
+        totalSteps: 0,
+        message: '',
+        startedAt: null,
+      });
+      
       console.error('Error fetching earthquakes:', err);
     }
   },

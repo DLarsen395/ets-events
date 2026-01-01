@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🌍 Earthquake Charts Enhanced
 
-Major improvements to the Earthquake Charts feature including API robustness, new filters, and visualization enhancements.
+Major improvements to the Earthquake Charts feature including API robustness, new filters, visualization enhancements, and intelligent caching.
 
 ### Added
 - **Max Magnitude Filter** - Added upper bound magnitude filter (M0 to M9+)
@@ -27,6 +27,14 @@ Major improvements to the Earthquake Charts feature including API robustness, ne
   - Adaptive chunk sizes based on magnitude filter (M5+ = 365 days/chunk, M2+ = 30 days/chunk)
   - 300ms delay between chunks to respect rate limits
   - Automatic deduplication of events across chunk boundaries
+- **IndexedDB Cache System** - Intelligent caching for earthquake data
+  - Historical data (>4 weeks old) cached permanently
+  - Recent data (<4 weeks old) has 24-hour freshness window
+  - Automatic cache hit/miss detection per day
+  - Cache Status Panel showing statistics (total events, size estimate, stale days)
+  - Cache Progress Banner showing real-time fetching/caching progress
+  - Manual cache management (Clear All, Clear Stale)
+  - Toggle to enable/disable caching
 
 ### Changed
 - **Default Time Range** - Changed from 30 days to 7 days for faster initial load
