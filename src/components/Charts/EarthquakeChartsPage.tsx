@@ -1,0 +1,284 @@
+/**
+ * Main container page for Earthquake Charts view
+ */
+
+import { useEffect } from 'react';
+import { useEarthquakeStore } from '../../stores/earthquakeStore';
+import { ChartFilters } from './ChartFilters';
+import { EarthquakeSummary } from './EarthquakeSummary';
+import { RechartsBarChart } from './RechartsBarChart';
+import { ChartJSBarChart } from './ChartJSBarChart';
+
+export function EarthquakeChartsPage() {
+  const {
+    dailyAggregates,
+    chartLibrary,
+    isLoading,
+    error,
+    lastFetched,
+    fetchEarthquakes,
+    refreshData,
+    regionScope,
+    minMagnitude,
+  } = useEarthquakeStore();
+
+  // Fetch data on mount if not already loaded
+  useEffect(() => {
+    if (!lastFetched) {
+      fetchEarthquakes();
+    }
+  }, [fetchEarthquakes, lastFetched]);
+
+  // Build chart title
+  const getChartTitle = () => {
+    const parts = [];
+    parts.push('Earthquakes per Day');
+    if (minMagnitude !== null) {
+      parts.push(`(M${minMagnitude}+)`);
+    }
+    parts.push('-');
+    parts.push(regionScope === 'us' ? 'United States' : 'Worldwide');
+    return parts.join(' ');
+  };
+
+  return (
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '1rem',
+        gap: '1rem',
+        overflowY: 'auto',
+        backgroundColor: '#111827',
+      }}
+    >
+      {/* Filters */}
+      <ChartFilters />
+
+      {/* Main content area */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 300px',
+          gap: '1rem',
+          flex: 1,
+          minHeight: 0,
+        }}
+      >
+        {/* Chart area */}
+        <div
+          style={{
+            backgroundColor: 'rgba(31, 41, 55, 0.8)',
+            borderRadius: '0.5rem',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(75, 85, 99, 0.3)',
+            padding: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Chart header */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1rem',
+            }}
+          >
+            <h2
+              style={{
+                color: 'white',
+                fontSize: '1.125rem',
+                fontWeight: 600,
+                margin: 0,
+              }}
+            >
+              {getChartTitle()}
+            </h2>
+            <button
+              onClick={refreshData}
+              disabled={isLoading}
+              style={{
+                padding: '0.375rem 0.75rem',
+                fontSize: '0.875rem',
+                color: isLoading ? '#6b7280' : '#60a5fa',
+                backgroundColor: 'transparent',
+                border: '1px solid',
+                borderColor: isLoading ? '#374151' : '#60a5fa',
+                borderRadius: '0.375rem',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '0.875rem',
+                      height: '0.875rem',
+                      border: '2px solid #374151',
+                      borderTopColor: '#60a5fa',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                    }}
+                  />
+                  Loading...
+                </>
+              ) : (
+                <>🔄 Refresh</>
+              )}
+            </button>
+          </div>
+
+          {/* Error state */}
+          {error && (
+            <div
+              style={{
+                padding: '1rem',
+                backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                borderRadius: '0.375rem',
+                border: '1px solid rgba(220, 38, 38, 0.3)',
+                color: '#fca5a5',
+                marginBottom: '1rem',
+              }}
+            >
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {isLoading && dailyAggregates.length === 0 && (
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#9ca3af',
+              }}
+            >
+              <div style={{ textAlign: 'center' }}>
+                <div
+                  style={{
+                    width: '3rem',
+                    height: '3rem',
+                    border: '3px solid #374151',
+                    borderTopColor: '#60a5fa',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 1rem',
+                  }}
+                />
+                <p>Loading earthquake data...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Chart */}
+          {dailyAggregates.length > 0 && (
+            <div style={{ flex: 1, minHeight: 300 }}>
+              {chartLibrary === 'recharts' ? (
+                <RechartsBarChart data={dailyAggregates} />
+              ) : (
+                <ChartJSBarChart data={dailyAggregates} />
+              )}
+            </div>
+          )}
+
+          {/* No data state */}
+          {!isLoading && !error && dailyAggregates.length === 0 && (
+            <div
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#9ca3af',
+              }}
+            >
+              <p>No earthquake data available for the selected filters</p>
+            </div>
+          )}
+
+          {/* Last updated */}
+          {lastFetched && (
+            <div
+              style={{
+                marginTop: '0.75rem',
+                fontSize: '0.75rem',
+                color: '#6b7280',
+                textAlign: 'right',
+              }}
+            >
+              Last updated: {lastFetched.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar with summary */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <EarthquakeSummary />
+
+          {/* Info card */}
+          <div
+            style={{
+              padding: '1rem',
+              backgroundColor: 'rgba(31, 41, 55, 0.8)',
+              borderRadius: '0.5rem',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(75, 85, 99, 0.3)',
+            }}
+          >
+            <h3
+              style={{
+                color: '#d1d5db',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+              }}
+            >
+              About This Data
+            </h3>
+            <p style={{ fontSize: '0.75rem', color: '#9ca3af', lineHeight: 1.5 }}>
+              Earthquake data is sourced from the{' '}
+              <a
+                href="https://earthquake.usgs.gov/fdsnws/event/1/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#60a5fa' }}
+              >
+                USGS Earthquake Catalog API
+              </a>
+              . Data is typically updated within minutes of an earthquake occurring.
+            </p>
+            {regionScope === 'us' && (
+              <p
+                style={{
+                  fontSize: '0.75rem',
+                  color: '#9ca3af',
+                  lineHeight: 1.5,
+                  marginTop: '0.5rem',
+                }}
+              >
+                US data includes: Continental US, Alaska, Hawaii, Puerto Rico/USVI, and Guam.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* CSS for spin animation */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}

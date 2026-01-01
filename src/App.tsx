@@ -6,14 +6,21 @@ import { RightPanelLayout } from './components/Controls/RightPanelLayout';
 import { DataRangeSelector } from './components/Controls/DataRangeSelector';
 import { Legend } from './components/Controls/Legend';
 import { MobileInfoPanel } from './components/Controls/MobileInfoPanel';
+import { ViewNavigation } from './components/Navigation/ViewNavigation';
+import { EarthquakeChartsPage } from './components/Charts/EarthquakeChartsPage';
 import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 import { useIsMobileDevice } from './hooks/useIsMobile';
+import { useEarthquakeStore } from './stores/earthquakeStore';
+import type { AppView } from './types/earthquake';
 
 function App() {
   const { events, isLoading, error } = useEventData();
   const [filteredEvents, setFilteredEvents] = useState<ETSEventWithOpacity[]>([]);
   const isMobileDevice = useIsMobileDevice();
+  
+  // View navigation from earthquake store
+  const { currentView, setCurrentView } = useEarthquakeStore();
   
   // Map state (lifted up for RightPanelLayout Tools panel)
   const [currentStyle, setCurrentStyle] = useState<MapStyleKey>(DEFAULT_STYLE);
@@ -96,86 +103,126 @@ function App() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ 
         backgroundColor: '#1f2937', 
-        padding: isMobileDevice ? '0.5rem 0.75rem' : '1rem 1.5rem',
+        padding: isMobileDevice ? '0.5rem 0.75rem' : '0.75rem 1.5rem',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
         zIndex: 10
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+          {/* Left: Title */}
           <h1 style={{ 
-            fontSize: isMobileDevice ? '1rem' : '1.5rem', 
+            fontSize: isMobileDevice ? '1rem' : '1.25rem', 
             fontWeight: 'bold', 
             color: 'white', 
-            margin: 0 
+            margin: 0,
+            whiteSpace: 'nowrap',
           }}>
-            {isMobileDevice ? 'ETS Events' : 'ETS Events Visualization'}
+            {isMobileDevice ? 'Seismic' : 'Seismic Visualization'}
           </h1>
-          <div style={{ fontSize: isMobileDevice ? '0.75rem' : '0.875rem', color: '#9ca3af' }}>
-            {events.length.toLocaleString()} events
+          
+          {/* Center: Navigation */}
+          {!isMobileDevice && (
+            <ViewNavigation 
+              currentView={currentView} 
+              onViewChange={setCurrentView} 
+            />
+          )}
+          
+          {/* Right: Event count (only on ETS Events view) */}
+          <div style={{ 
+            fontSize: isMobileDevice ? '0.75rem' : '0.875rem', 
+            color: '#9ca3af',
+            whiteSpace: 'nowrap',
+          }}>
+            {currentView === 'ets-events' ? (
+              <>{events.length.toLocaleString()} events</>
+            ) : (
+              <span style={{ opacity: 0.5 }}>USGS Data</span>
+            )}
           </div>
         </div>
-      </header>
-      
-      <main style={{ flex: 1, position: 'relative' }}>
-        <MapContainer 
-          events={displayEvents} 
-          currentStyle={currentStyle}
-          showPlateBoundaries={showPlateBoundaries}
-        />
         
-        {/* Loading overlay for data refresh */}
-        {isLoading && hasLoadedOnce && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(17, 24, 39, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 50,
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <div className="animate-spin" style={{ 
-                width: '3rem', 
-                height: '3rem', 
-                border: '3px solid transparent',
-                borderTopColor: '#3b82f6',
-                borderRadius: '50%',
-                margin: '0 auto 0.75rem'
-              }}></div>
-              <p style={{ fontSize: '1rem', color: '#9ca3af' }}>Loading events...</p>
-            </div>
+        {/* Mobile navigation below header content */}
+        {isMobileDevice && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <ViewNavigation 
+              currentView={currentView} 
+              onViewChange={setCurrentView} 
+            />
           </div>
         )}
+      </header>
+      
+      <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        {/* ETS Events View */}
+        {currentView === 'ets-events' && (
+          <>
+            <MapContainer 
+              events={displayEvents} 
+              currentStyle={currentStyle}
+              showPlateBoundaries={showPlateBoundaries}
+            />
         
-        <DataRangeSelector isLoading={isLoading} />
-        <Legend />
-        <RightPanelLayout 
-          events={events}
-          visibleCount={displayEvents.length}
-          isPlaying={!showAllEvents}
-          currentStyle={currentStyle}
-          onStyleChange={setCurrentStyle}
-          showPlateBoundaries={showPlateBoundaries}
-          onPlateBoundariesChange={setShowPlateBoundaries}
-        />
-        {isMobileDevice && (
-          <MobileInfoPanel 
-            events={events}
-            visibleCount={displayEvents.length}
-          />
+            {/* Loading overlay for data refresh */}
+            {isLoading && hasLoadedOnce && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(17, 24, 39, 0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 50,
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div className="animate-spin" style={{ 
+                    width: '3rem', 
+                    height: '3rem', 
+                    border: '3px solid transparent',
+                    borderTopColor: '#3b82f6',
+                    borderRadius: '50%',
+                    margin: '0 auto 0.75rem'
+                  }}></div>
+                  <p style={{ fontSize: '1rem', color: '#9ca3af' }}>Loading events...</p>
+                </div>
+              </div>
+            )}
+        
+            <DataRangeSelector isLoading={isLoading} />
+            <Legend />
+            <RightPanelLayout 
+              events={events}
+              visibleCount={displayEvents.length}
+              isPlaying={!showAllEvents}
+              currentStyle={currentStyle}
+              onStyleChange={setCurrentStyle}
+              showPlateBoundaries={showPlateBoundaries}
+              onPlateBoundariesChange={setShowPlateBoundaries}
+            />
+            {isMobileDevice && (
+              <MobileInfoPanel 
+                events={events}
+                visibleCount={displayEvents.length}
+              />
+            )}
+            <PlaybackControls 
+              currentTime={currentTime}
+              startTime={startTime}
+              endTime={endTime}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
+              eventCount={displayEvents.length}
+              totalEvents={events.length}
+            />
+          </>
         )}
-        <PlaybackControls 
-          currentTime={currentTime}
-          startTime={startTime}
-          endTime={endTime}
-          rangeStart={rangeStart}
-          rangeEnd={rangeEnd}
-          eventCount={displayEvents.length}
-          totalEvents={events.length}
-        />
+        
+        {/* Earthquake Charts View */}
+        {currentView === 'earthquake-charts' && (
+          <EarthquakeChartsPage />
+        )}
       </main>
     </div>
   );
