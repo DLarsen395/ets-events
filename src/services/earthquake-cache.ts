@@ -1,4 +1,4 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                    /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                              /**
  * IndexedDB Cache Service for Earthquake Data
  * 
  * Caching Strategy:

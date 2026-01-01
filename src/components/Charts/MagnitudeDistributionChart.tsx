@@ -15,6 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  ReferenceDot,
 } from 'recharts';
 import type { EarthquakeFeature } from '../../services/usgs-earthquake-api';
 import {
@@ -320,6 +321,46 @@ export function MagnitudeDistributionChart({
     }, 0);
   }, [chartData, activeRanges]);
 
+  // Calculate totals per magnitude range for the summary bar
+  const rangeTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+    for (const range of activeRanges) {
+      totals[range.key] = chartData.reduce((sum, point) => {
+        return sum + ((point[range.key] as number) || 0);
+      }, 0);
+    }
+    return totals;
+  }, [chartData, activeRanges]);
+
+  // Find significant events (M5+) to show as markers on top of chart
+  const significantMarkers = useMemo(() => {
+    const markers: Array<{ period: string; magnitude: string; count: number; color: string; yPosition: number }> = [];
+    const significantRanges = activeRanges.filter(r => r.min >= 5);
+    
+    for (const point of chartData) {
+      // Calculate cumulative height up to this range for positioning
+      let cumulativeHeight = 0;
+      for (const range of activeRanges) {
+        const count = (point[range.key] as number) || 0;
+        cumulativeHeight += count;
+      }
+      
+      for (const range of significantRanges) {
+        const count = (point[range.key] as number) || 0;
+        if (count > 0) {
+          markers.push({
+            period: point.period as string,
+            magnitude: range.label,
+            count,
+            color: range.color,
+            yPosition: cumulativeHeight, // Position at top of stack
+          });
+        }
+      }
+    }
+    return markers;
+  }, [chartData, activeRanges]);
+
   if (earthquakes.length === 0) {
     return (
       <div style={{ 
@@ -465,8 +506,78 @@ export function MagnitudeDistributionChart({
               fillOpacity={0.6}
             />
           ))}
+          {/* Add markers for significant events (M5+) so they're visible even when small */}
+          {significantMarkers.map((marker, idx) => (
+            <ReferenceDot
+              key={`${marker.period}-${marker.magnitude}-${idx}`}
+              x={marker.period}
+              y={marker.yPosition}
+              r={Math.min(8, 4 + marker.count)}
+              fill={marker.color}
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
+          ))}
         </AreaChart>
       </ResponsiveContainer>
+
+      {/* Summary bar showing counts per magnitude range */}
+      {activeRanges.length > 0 && (
+        <div style={{ 
+          marginTop: '0.75rem',
+          padding: '0.5rem 0.75rem',
+          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          borderRadius: '0.375rem',
+        }}>
+          <div style={{ 
+            fontSize: '0.7rem', 
+            color: colors.textMuted, 
+            marginBottom: '0.375rem',
+          }}>
+            Total by Magnitude Range:
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: '0.5rem',
+          }}>
+            {activeRanges.map(range => {
+              const count = rangeTotals[range.key] || 0;
+              if (count === 0) return null;
+              return (
+                <div 
+                  key={range.key}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    padding: '0.125rem 0.375rem',
+                    backgroundColor: `${range.color}30`,
+                    borderRadius: '0.25rem',
+                    border: `1px solid ${range.color}50`,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      backgroundColor: range.color,
+                      borderRadius: '2px',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: '0.7rem', color: colors.text }}>
+                    {range.label}:
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'white', fontWeight: 600 }}>
+                    {count.toLocaleString()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
