@@ -43,10 +43,10 @@ export function EarthquakeChartsPage() {
     customStartDate,
     customEndDate,
   } = useEarthquakeStore();
-  
+
   // Time grouping for top chart
   const [topChartGrouping, setTopChartGrouping] = useState<TimeGrouping>('day');
-  
+
   // Calculate days in range for smart chart defaults
   const daysInRange = useMemo(() => {
     if (timeRange === 'custom' && customStartDate && customEndDate) {
@@ -55,7 +55,7 @@ export function EarthquakeChartsPage() {
     const option = TIME_RANGE_OPTIONS.find(o => o.value === timeRange);
     return option?.days || 30;
   }, [timeRange, customStartDate, customEndDate]);
-  
+
   // Update top chart grouping when date range changes
   useEffect(() => {
     setTopChartGrouping(getSmartGrouping(daysInRange));
@@ -67,7 +67,7 @@ export function EarthquakeChartsPage() {
       fetchEarthquakes();
     }
   }, [fetchEarthquakes, lastFetched]);
-  
+
   // Aggregate data for top chart based on selected grouping
   const topChartData = useMemo(() => {
     if (topChartGrouping === 'day') {
@@ -82,7 +82,7 @@ export function EarthquakeChartsPage() {
     const parts = [];
     const groupLabel = TIME_GROUPING_OPTIONS.find(o => o.value === topChartGrouping)?.label || 'Day';
     parts.push(`Earthquakes per ${groupLabel}`);
-    
+
     // Build magnitude range string
     const minStr = `M${minMagnitude}`;
     const maxStr = maxMagnitude >= 10 ? 'M9+' : `M${maxMagnitude}`;
@@ -91,7 +91,7 @@ export function EarthquakeChartsPage() {
     } else {
       parts.push(`(${minStr} to ${maxStr})`);
     }
-    
+
     parts.push('-');
     parts.push(regionScope === 'us' ? 'United States' : 'Worldwide');
     return parts.join(' ');
@@ -118,9 +118,9 @@ export function EarthquakeChartsPage() {
       >
         {/* Cache Progress Banner - shows when caching is in progress */}
         <CacheProgressBanner />
-        
+
         {/* Main content with padding */}
-        <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', flex: 1 }}>
+        <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {/* Filters */}
           <ChartFilters />
 
@@ -158,7 +158,7 @@ export function EarthquakeChartsPage() {
               >
                 {getChartTitle()}
               </h2>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 {/* Time grouping buttons */}
                 <div style={{ display: 'flex', gap: '0.25rem' }}>
@@ -182,7 +182,7 @@ export function EarthquakeChartsPage() {
                     </button>
                   ))}
                 </div>
-                
+
                 <button
                   onClick={refreshData}
                   disabled={isLoading}
@@ -297,7 +297,7 @@ export function EarthquakeChartsPage() {
           {lastFetched && (
             <div
               style={{
-                marginTop: '0.5rem',
+                marginTop: '0.25rem',
                 fontSize: '0.7rem',
                 color: '#6b7280',
                 textAlign: 'right',
@@ -311,17 +311,17 @@ export function EarthquakeChartsPage() {
 
         {/* Magnitude Distribution Chart */}
         {earthquakes.length > 0 && (
-          <MagnitudeDistributionChart 
+          <MagnitudeDistributionChart
             earthquakes={earthquakes}
             title="Magnitude Distribution Over Time"
             height={240}
             daysInRange={daysInRange}
           />
         )}
-        
+
         {/* Energy Release Chart */}
         {earthquakes.length > 0 && (
-          <EnergyReleaseChart 
+          <EnergyReleaseChart
             earthquakes={earthquakes}
             title="Seismic Energy Released"
             height={240}
@@ -344,7 +344,7 @@ export function EarthquakeChartsPage() {
         }}
       >
         <EarthquakeSummary />
-        
+
         {/* Cache Status Panel */}
         <CacheStatusPanel />
 

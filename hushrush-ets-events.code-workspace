@@ -3,5 +3,10 @@
         {
             "path": "."
         }
-    ]
+    ],
+    "settings": {
+        "[go]": {
+            "editor.formatOnSave": false
+        }
+    }
 }

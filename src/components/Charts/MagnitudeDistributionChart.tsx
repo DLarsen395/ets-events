@@ -1,6 +1,6 @@
                                                                                                                                                                                   /**
  * Magnitude Distribution Over Time Chart
- * 
+ *
  * Shows earthquake counts by magnitude range over configurable time periods.
  * Uses Recharts AreaChart with stacked areas for magnitude ranges.
  */
@@ -87,9 +87,9 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         opacity: 1,  // Ensure fully opaque
       }}
     >
-      <p style={{ 
-        color: colors.tooltip.text, 
-        fontWeight: 600, 
+      <p style={{
+        color: colors.tooltip.text,
+        fontWeight: 600,
         marginBottom: '0.5rem',
         fontSize: '0.875rem',
         borderBottom: `1px solid ${colors.grid}`,
@@ -97,8 +97,8 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       }}>
         {label}
       </p>
-      <p style={{ 
-        color: colors.textMuted, 
+      <p style={{
+        color: colors.textMuted,
         fontSize: '0.75rem',
         marginBottom: '0.5rem',
       }}>
@@ -148,24 +148,24 @@ interface RangeFilterProps {
 /**
  * Magnitude range filter component
  */
-function RangeFilter({ 
-  enabledRanges, 
-  onToggleRange, 
-  onSelectAll, 
+function RangeFilter({
+  enabledRanges,
+  onToggleRange,
+  onSelectAll,
   onSelectNone,
   onSelectHighMag,
 }: RangeFilterProps) {
   return (
     <div style={{ marginBottom: '1rem' }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
         gap: '0.5rem',
         marginBottom: '0.5rem',
         flexWrap: 'wrap',
       }}>
-        <span style={{ 
-          color: colors.text, 
+        <span style={{
+          color: colors.text,
           fontSize: '0.75rem',
           fontWeight: 500,
         }}>
@@ -214,9 +214,9 @@ function RangeFilter({
           M4+
         </button>
       </div>
-      <div style={{ 
-        display: 'flex', 
-        flexWrap: 'wrap', 
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
         gap: '0.375rem',
       }}>
         {MAGNITUDE_RANGES.map((range) => {
@@ -280,13 +280,13 @@ export function MagnitudeDistributionChart({
 }: MagnitudeDistributionChartProps) {
   // Calculate smart default based on date range
   const defaultGrouping = useMemo(() => getDefaultTimeGrouping(daysInRange), [daysInRange]);
-  
+
   // State for configuration - initialize with smart default
   const [timeGrouping, setTimeGrouping] = useState<TimeGrouping>(defaultGrouping);
   const [enabledRanges, setEnabledRanges] = useState<Set<string>>(
     () => new Set(MAGNITUDE_RANGES.map(r => r.key))
   );
-  
+
   // Update grouping when date range changes significantly
   const prevDaysRef = useRef(daysInRange);
   useEffect(() => {
@@ -368,7 +368,7 @@ export function MagnitudeDistributionChart({
   const significantMarkers = useMemo(() => {
     const markers: Array<{ period: string; magnitude: string; count: number; color: string; yPosition: number }> = [];
     const significantRanges = activeRanges.filter(r => r.min >= 5);
-    
+
     for (const point of chartData) {
       // Calculate cumulative height up to this range for positioning
       let cumulativeHeight = 0;
@@ -376,7 +376,7 @@ export function MagnitudeDistributionChart({
         const count = (point[range.key] as number) || 0;
         cumulativeHeight += count;
       }
-      
+
       for (const range of significantRanges) {
         const count = (point[range.key] as number) || 0;
         if (count > 0) {
@@ -395,8 +395,8 @@ export function MagnitudeDistributionChart({
 
   if (earthquakes.length === 0) {
     return (
-      <div style={{ 
-        width: '100%', 
+      <div style={{
+        width: '100%',
         height,
         display: 'flex',
         alignItems: 'center',
@@ -411,12 +411,12 @@ export function MagnitudeDistributionChart({
   }
 
   return (
-    <div style={{ 
-      width: '100%',
+    <div style={{
       backgroundColor: colors.background,
       borderRadius: '0.5rem',
-      padding: '0.75rem 1rem',
-      margin: '0 0.75rem',
+      padding: '0.75rem 1rem 0.5rem 1rem',
+      margin: '0 0.75rem 0 0.75rem',
+      border: '1px solid rgba(75, 85, 99, 0.3)',
     }}>
       {/* Header */}
       <div style={{
@@ -428,9 +428,9 @@ export function MagnitudeDistributionChart({
         gap: '0.5rem',
       }}>
         <div>
-          <h3 style={{ 
-            color: colors.text, 
-            fontSize: '1rem', 
+          <h3 style={{
+            color: colors.text,
+            fontSize: '1rem',
             fontWeight: 600,
             margin: 0,
           }}>
@@ -454,15 +454,15 @@ export function MagnitudeDistributionChart({
               style={{
                 padding: '0.2rem 0.5rem',
                 fontSize: '0.7rem',
-                backgroundColor: timeGrouping === option.value 
-                  ? '#3b82f6' 
+                backgroundColor: timeGrouping === option.value
+                  ? '#3b82f6'
                   : 'transparent',
-                border: `1px solid ${timeGrouping === option.value 
-                  ? '#3b82f6' 
+                border: `1px solid ${timeGrouping === option.value
+                  ? '#3b82f6'
                   : colors.grid}`,
                 borderRadius: '0.25rem',
-                color: timeGrouping === option.value 
-                  ? '#ffffff' 
+                color: timeGrouping === option.value
+                  ? '#ffffff'
                   : colors.textMuted,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -489,10 +489,10 @@ export function MagnitudeDistributionChart({
           data={chartData}
           margin={{ top: 10, right: 10, left: 0, bottom: 60 }}
         >
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke={colors.grid} 
-            vertical={false} 
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke={colors.grid}
+            vertical={false}
           />
           <XAxis
             dataKey="period"
@@ -518,8 +518,8 @@ export function MagnitudeDistributionChart({
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
-            wrapperStyle={{ 
-              paddingTop: '1rem',
+            wrapperStyle={{
+              paddingTop: '0',
               fontSize: '0.75rem',
             }}
             formatter={(value) => (
@@ -556,29 +556,29 @@ export function MagnitudeDistributionChart({
 
       {/* Summary bar showing counts per magnitude range */}
       {activeRanges.length > 0 && (
-        <div style={{ 
-          marginTop: '0.75rem',
-          padding: '0.5rem 0.75rem',
+        <div style={{
+          marginTop: '0.25rem',
+          padding: '0.25rem 0.5rem',
           backgroundColor: 'rgba(0, 0, 0, 0.2)',
           borderRadius: '0.375rem',
         }}>
-          <div style={{ 
-            fontSize: '0.7rem', 
-            color: colors.textMuted, 
-            marginBottom: '0.375rem',
+          <div style={{
+            fontSize: '0.7rem',
+            color: colors.textMuted,
+            marginBottom: '0.25rem',
           }}>
             Total by Magnitude Range:
           </div>
-          <div style={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
             gap: '0.5rem',
           }}>
             {activeRanges.map(range => {
               const count = rangeTotals[range.key] || 0;
               if (count === 0) return null;
               return (
-                <div 
+                <div
                   key={range.key}
                   style={{
                     display: 'flex',

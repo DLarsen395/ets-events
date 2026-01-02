@@ -7,6 +7,7 @@ html, body {
   padding: 0;
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -19,6 +20,32 @@ body {
 #root {
   width: 100%;
   height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Dark themed scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
 }
 
 /* Map container must have explicit dimensions */
