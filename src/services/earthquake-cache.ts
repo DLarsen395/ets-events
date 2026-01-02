@@ -61,6 +61,8 @@ export interface CacheProgress {
   startedAt: number | null;
   /** Current date being processed */
   currentDate?: string;
+  /** Number of events loaded so far (for live progress display) */
+  eventsLoaded?: number;
 }
 
 export interface CacheQuery {

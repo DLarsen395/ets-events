@@ -180,6 +180,12 @@ export function CacheProgressBanner() {
       
       {/* Stats */}
       <div style={{ display: 'flex', gap: '1rem', flexShrink: 0 }}>
+        {/* Live event count */}
+        {progress.eventsLoaded !== undefined && progress.eventsLoaded > 0 && (
+          <span style={{ color: '#86efac', fontSize: '0.75rem', fontWeight: 500 }}>
+            {progress.eventsLoaded.toLocaleString()} events
+          </span>
+        )}
         {progress.totalSteps > 0 && (
           <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
             {progress.currentStep}/{progress.totalSteps} ({percentage}%)

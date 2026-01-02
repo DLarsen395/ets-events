@@ -533,6 +533,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           message: progress.message,
           startedAt: cacheStore.progress.startedAt || Date.now(),
           currentDate: `${progress.currentChunkStart} → ${progress.currentChunkEnd}`,
+          eventsLoaded: progress.eventsFound,
         });
       };
       
@@ -574,7 +575,6 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           
           // Handler to progressively update UI during stale day fetches
           // Merges cached data with fresh data as it streams in
-          let lastStatsUpdate = 0;
           const handleIntermediateData = (freshFeaturesSoFar: EarthquakeFeature[]) => {
             // Combine cached earthquakes with fresh ones fetched so far
             const combinedFeatures = [...cachedEarthquakes, ...freshFeaturesSoFar];
@@ -585,13 +585,8 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
               dailyAggregates,
               summary,
             });
-            
-            // Update cache stats periodically (every 5 seconds) during fetch
-            const now = Date.now();
-            if (now - lastStatsUpdate > 5000) {
-              lastStatsUpdate = now;
-              cacheStore.refreshStats();
-            }
+            // Note: Cache stats are NOT updated here because data isn't stored yet.
+            // The progress banner shows live eventsLoaded count instead.
           };
           
           // Show cached data immediately while fetching missing days
@@ -613,6 +608,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
                 message: `Fetching ${progress.currentDate}...`,
                 startedAt: cacheStore.progress.startedAt || Date.now(),
                 currentDate: progress.currentDate,
+                eventsLoaded: cachedEarthquakes.length + progress.eventsFound,
               });
             },
             handleIntermediateData,  // Progressive chart updates
