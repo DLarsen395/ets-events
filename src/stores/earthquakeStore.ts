@@ -150,6 +150,8 @@ async function fetchStaleDays(
   
   // Determine max range size based on magnitude to avoid hitting 20k API limit
   // Lower magnitudes have more events per day, so use smaller ranges
+  // Each US region query returns up to 20k events, and we query 5 regions
+  // Typical daily counts: M-2+ ~300-600/day per region, M0+ ~150-350, M2+ ~30-100
   let maxRangeDays: number;
   if (minMagnitude >= 6) {
     maxRangeDays = 3650; // 10 years - very few M6+ events
@@ -160,14 +162,15 @@ async function fetchStaleDays(
   } else if (minMagnitude >= 3) {
     maxRangeDays = 60; // 2 months
   } else if (minMagnitude >= 2) {
-    maxRangeDays = 14; // 2 weeks
+    maxRangeDays = 14; // 2 weeks - ~10k events, well under 20k limit
   } else if (minMagnitude >= 1) {
     maxRangeDays = 7; // 1 week
   } else if (minMagnitude >= 0) {
-    maxRangeDays = 3; // 3 days
+    maxRangeDays = 5; // 5 days - ~2k events, safe margin
   } else {
-    // For negative magnitudes, use 1 day to be safe
-    maxRangeDays = 1;
+    // For negative magnitudes, use 3 days - daily counts are ~300-600 per region
+    // 3 days * 600 * 5 regions = 9k, well under 20k limit
+    maxRangeDays = 3;
   }
   
   // Group consecutive days into ranges, respecting max range size
@@ -571,6 +574,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
           
           // Handler to progressively update UI during stale day fetches
           // Merges cached data with fresh data as it streams in
+          let lastStatsUpdate = 0;
           const handleIntermediateData = (freshFeaturesSoFar: EarthquakeFeature[]) => {
             // Combine cached earthquakes with fresh ones fetched so far
             const combinedFeatures = [...cachedEarthquakes, ...freshFeaturesSoFar];
@@ -581,6 +585,13 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
               dailyAggregates,
               summary,
             });
+            
+            // Update cache stats periodically (every 5 seconds) during fetch
+            const now = Date.now();
+            if (now - lastStatsUpdate > 5000) {
+              lastStatsUpdate = now;
+              cacheStore.refreshStats();
+            }
           };
           
           // Show cached data immediately while fetching missing days

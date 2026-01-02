@@ -122,10 +122,20 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
   const barConfig = getBarConfig(data.length);
   
   // Format data with labels
-  const chartData = data.map(d => ({
-    ...d,
-    label: new Date(d.date).toLocaleDateString('en-US', dateFormat),
-  }));
+  // The date field might already be a formatted string (for week/month/year grouping)
+  // or an ISO date string (for day grouping), so we check before parsing
+  const chartData = data.map(d => {
+    // Try to parse as date - if it fails or gives Invalid Date, use the original string
+    const parsedDate = new Date(d.date);
+    const isValidDate = !isNaN(parsedDate.getTime());
+    
+    return {
+      ...d,
+      label: isValidDate 
+        ? parsedDate.toLocaleDateString('en-US', dateFormat)
+        : d.date,  // Already formatted (e.g., "Oct 2025", "2025")
+    };
+  });
 
   // Calculate tick interval based on data length
   const tickInterval = data.length > 60 

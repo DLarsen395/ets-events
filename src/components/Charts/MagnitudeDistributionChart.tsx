@@ -77,13 +77,14 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return (
     <div
       style={{
-        backgroundColor: colors.tooltip.bg,
+        backgroundColor: '#1f2937',  // Solid color, no transparency
         border: `1px solid ${colors.tooltip.border}`,
         borderRadius: '0.5rem',
         padding: '0.75rem',
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
         maxHeight: '300px',
         overflowY: 'auto',
+        opacity: 1,  // Ensure fully opaque
       }}
     >
       <p style={{ 

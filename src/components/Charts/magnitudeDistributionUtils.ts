@@ -143,8 +143,8 @@ export function formatPeriodLabel(date: Date, grouping: TimeGrouping): string {
     case 'month':
       return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
     case 'week': {
-      const { year, week } = getWeekKey(date);
-      return `${year} W${week.toString().padStart(2, '0')}`;
+      // Format as date of the week start instead of "YYYY Wnn"
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
     case 'day':
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
