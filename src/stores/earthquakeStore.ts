@@ -139,6 +139,7 @@ async function fetchStaleDays(
   minMagnitude: number,
   maxMagnitude: number | undefined,
   onProgress?: (progress: StaleDayProgress) => void,
+  onIntermediateData?: IntermediateDataCallback,
 ): Promise<EarthquakeFeature[]> {
   const allFeatures: EarthquakeFeature[] = [];
   const seenIds = new Set<string>();
@@ -207,6 +208,12 @@ async function fetchStaleDays(
       }
       
       daysFetched += rangeDays;
+      
+      // Update intermediate data for progressive chart updates
+      // Call on every range to keep UI responsive
+      if (onIntermediateData) {
+        onIntermediateData(allFeatures);
+      }
       
       // Small delay between ranges to avoid rate limiting (only if more ranges to fetch)
       if (ranges.indexOf(range) < ranges.length - 1) {
@@ -534,6 +541,25 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
             startedAt: Date.now(),
           });
           
+          // Handler to progressively update UI during stale day fetches
+          // Merges cached data with fresh data as it streams in
+          const handleIntermediateData = (freshFeaturesSoFar: EarthquakeFeature[]) => {
+            // Combine cached earthquakes with fresh ones fetched so far
+            const combinedFeatures = [...cachedEarthquakes, ...freshFeaturesSoFar];
+            const dailyAggregates = aggregateEarthquakesByDay(combinedFeatures);
+            const summary = getEarthquakeSummary(combinedFeatures);
+            set({
+              dailyAggregates,
+              summary,
+              // Don't update earthquakes array until complete to save memory
+            });
+          };
+          
+          // Show cached data immediately while fetching missing days
+          if (cachedEarthquakes.length > 0) {
+            handleIntermediateData([]);
+          }
+          
           // Fetch ONLY the stale days
           const freshEarthquakes = await fetchStaleDays(
             staleDays,
@@ -550,6 +576,7 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
                 currentDate: progress.currentDate,
               });
             },
+            handleIntermediateData,  // Progressive chart updates
           );
           
           // Store ONLY the fresh data in cache
