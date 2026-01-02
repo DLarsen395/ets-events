@@ -293,7 +293,10 @@ export function MagnitudeDistributionChart({
     const newDefault = getDefaultTimeGrouping(daysInRange);
     // Only auto-switch if the optimal grouping changed
     if (prevDefault !== newDefault) {
-      setTimeGrouping(newDefault);
+      // Defer state update to avoid cascading renders
+      requestAnimationFrame(() => {
+        setTimeGrouping(newDefault);
+      });
     }
     prevDaysRef.current = daysInRange;
   }, [daysInRange]);

@@ -148,24 +148,49 @@ async function fetchStaleDays(
   // Sort stale days to group consecutive days for batch fetching
   const sortedDays = [...staleDays].sort();
   
-  // Group consecutive days into ranges for more efficient fetching
+  // Determine max range size based on magnitude to avoid hitting 20k API limit
+  // Lower magnitudes have more events per day, so use smaller ranges
+  let maxRangeDays: number;
+  if (minMagnitude >= 6) {
+    maxRangeDays = 3650; // 10 years - very few M6+ events
+  } else if (minMagnitude >= 5) {
+    maxRangeDays = 365; // 1 year
+  } else if (minMagnitude >= 4) {
+    maxRangeDays = 180; // 6 months
+  } else if (minMagnitude >= 3) {
+    maxRangeDays = 60; // 2 months
+  } else if (minMagnitude >= 2) {
+    maxRangeDays = 14; // 2 weeks
+  } else if (minMagnitude >= 1) {
+    maxRangeDays = 7; // 1 week
+  } else if (minMagnitude >= 0) {
+    maxRangeDays = 3; // 3 days
+  } else {
+    // For negative magnitudes, use 1 day to be safe
+    maxRangeDays = 1;
+  }
+  
+  // Group consecutive days into ranges, respecting max range size
   const ranges: { start: string; end: string }[] = [];
   let rangeStart = sortedDays[0];
   let rangeEnd = sortedDays[0];
+  let rangeDayCount = 1;
   
   for (let i = 1; i < sortedDays.length; i++) {
     const prevDate = new Date(rangeEnd);
     const currDate = new Date(sortedDays[i]);
     const dayDiff = (currDate.getTime() - prevDate.getTime()) / (24 * 60 * 60 * 1000);
     
-    if (dayDiff === 1) {
-      // Consecutive day, extend range
+    if (dayDiff === 1 && rangeDayCount < maxRangeDays) {
+      // Consecutive day and within limit, extend range
       rangeEnd = sortedDays[i];
+      rangeDayCount++;
     } else {
-      // Gap in days, start new range
+      // Either gap in days or hit max range size, start new range
       ranges.push({ start: rangeStart, end: rangeEnd });
       rangeStart = sortedDays[i];
       rangeEnd = sortedDays[i];
+      rangeDayCount = 1;
     }
   }
   // Don't forget the last range

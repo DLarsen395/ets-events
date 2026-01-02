@@ -60,7 +60,10 @@ export const DataRangeSelector: React.FC<DataRangeSelectorProps> = ({ isLoading 
 
   // Clear validation error when dates change
   useEffect(() => {
-    setValidationError(null);
+    // Defer state update to avoid cascading renders
+    requestAnimationFrame(() => {
+      setValidationError(null);
+    });
   }, [customStart, customEnd]);
 
   // Get the current custom date range from store

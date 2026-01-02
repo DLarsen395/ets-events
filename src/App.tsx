@@ -12,7 +12,6 @@ import { useEventData } from './hooks/useEventData';
 import { usePlayback, type ETSEventWithOpacity } from './hooks/usePlayback';
 import { useIsMobileDevice } from './hooks/useIsMobile';
 import { useEarthquakeStore } from './stores/earthquakeStore';
-import type { AppView } from './types/earthquake';
 
 function App() {
   const { events, isLoading, error } = useEventData();

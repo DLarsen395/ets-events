@@ -34,16 +34,24 @@ export function CacheProgressBanner() {
         loadingStartRef.current = Date.now();
       }
       
-      // Start a new interval
+      // Calculate initial elapsed time without triggering setState
+      const initialElapsed = Math.round((Date.now() - startTime) / 1000);
+      
+      // Start a new interval for subsequent updates
       intervalRef.current = setInterval(() => {
         setElapsed(Math.round((Date.now() - startTime) / 1000));
       }, 1000);
       
-      // Initial update
-      setElapsed(Math.round((Date.now() - startTime) / 1000));
+      // Use requestAnimationFrame to defer initial state update
+      requestAnimationFrame(() => {
+        setElapsed(initialElapsed);
+      });
     } else {
       loadingStartRef.current = null;
-      setElapsed(0);
+      // Use requestAnimationFrame to defer state update
+      requestAnimationFrame(() => {
+        setElapsed(0);
+      });
     }
     
     return () => {
