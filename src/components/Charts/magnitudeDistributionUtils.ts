@@ -301,6 +301,7 @@ export function getMagnitudeDistributionStats(
 /**
  * Aggregate earthquakes by time period (week, month, year)
  * Returns data in the same format as DailyEarthquakeAggregate for use with bar charts
+ * Optimized: computes stats in single pass without storing individual values
  * 
  * @param earthquakes - Array of earthquake features from USGS API
  * @param grouping - How to group time periods (day, week, month, or year)
@@ -310,10 +311,16 @@ export function aggregateByTimePeriod(
   earthquakes: EarthquakeFeature[],
   grouping: TimeGrouping
 ): DailyEarthquakeAggregate[] {
-  // For day grouping, this would be redundant, but we handle it anyway
+  // Optimized stats tracking - no intermediate arrays
+  interface PeriodStats {
+    count: number;
+    sumMag: number;
+    maxMag: number;
+    minMag: number;
+    totalEnergy: number;
+  }
   
-  // Map to store aggregations: periodKey -> { magnitudes, energies }
-  const aggregations = new Map<string, { magnitudes: number[]; energies: number[] }>();
+  const aggregations = new Map<string, PeriodStats>();
   
   // Process each earthquake
   for (const eq of earthquakes) {
@@ -323,49 +330,41 @@ export function aggregateByTimePeriod(
     const date = new Date(eq.properties.time);
     const periodKey = getPeriodKey(date, grouping);
     
-    if (!aggregations.has(periodKey)) {
-      aggregations.set(periodKey, { magnitudes: [], energies: [] });
+    const existing = aggregations.get(periodKey);
+    if (existing) {
+      existing.count++;
+      existing.sumMag += magnitude;
+      existing.totalEnergy += energy;
+      if (magnitude > existing.maxMag) existing.maxMag = magnitude;
+      if (magnitude < existing.minMag) existing.minMag = magnitude;
+    } else {
+      aggregations.set(periodKey, {
+        count: 1,
+        sumMag: magnitude,
+        maxMag: magnitude,
+        minMag: magnitude,
+        totalEnergy: energy,
+      });
     }
-    
-    const periodData = aggregations.get(periodKey)!;
-    periodData.magnitudes.push(magnitude);
-    periodData.energies.push(energy);
   }
   
   // Convert to DailyEarthquakeAggregate format
-  const result: DailyEarthquakeAggregate[] = [];
+  // Sort keys first, then build result in order
+  const sortedKeys = Array.from(aggregations.keys()).sort();
   
-  for (const [periodKey, data] of aggregations) {
-    const { magnitudes, energies } = data;
-    const count = magnitudes.length;
-    
-    // Use reduce instead of Math.max/min spread to avoid stack overflow
-    const maxMagnitude = magnitudes.reduce((max, m) => m > max ? m : max, magnitudes[0]);
-    const minMagnitude = magnitudes.reduce((min, m) => m < min ? m : min, magnitudes[0]);
-    
+  const result: DailyEarthquakeAggregate[] = sortedKeys.map(periodKey => {
+    const stats = aggregations.get(periodKey)!;
     const periodDate = getDateFromPeriodKey(periodKey, grouping);
     const dateLabel = formatPeriodLabel(periodDate, grouping);
     
-    result.push({
+    return {
       date: dateLabel,
-      count,
-      avgMagnitude: magnitudes.reduce((sum, m) => sum + m, 0) / count,
-      maxMagnitude,
-      minMagnitude,
-      totalEnergy: energies.reduce((sum, e) => sum + e, 0),
-    });
-  }
-  
-  // Sort by the original period key to maintain chronological order
-  const sortedKeys = Array.from(aggregations.keys()).sort();
-  const keyToIndex = new Map(sortedKeys.map((k, i) => [k, i]));
-  
-  // Re-sort based on the original period keys
-  result.sort((a, b) => {
-    // Find the original keys for these results
-    const aKey = sortedKeys.find(k => formatPeriodLabel(getDateFromPeriodKey(k, grouping), grouping) === a.date);
-    const bKey = sortedKeys.find(k => formatPeriodLabel(getDateFromPeriodKey(k, grouping), grouping) === b.date);
-    return (keyToIndex.get(aKey!) || 0) - (keyToIndex.get(bKey!) || 0);
+      count: stats.count,
+      avgMagnitude: stats.sumMag / stats.count,
+      maxMagnitude: stats.maxMag,
+      minMagnitude: stats.minMag,
+      totalEnergy: stats.totalEnergy,
+    };
   });
   
   return result;

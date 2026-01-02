@@ -138,10 +138,12 @@ async function fetchInChunks(
   // Calculate total days
   const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
   
-  // Determine chunk size based on magnitude filter
-  // Higher min magnitude = fewer events = larger chunks possible
-  // For very low magnitudes, we need MUCH smaller chunks to avoid hitting 20k limit
+  // Determine chunk size based on magnitude filter AND time range
+  // For short time ranges (< 14 days), we can be more aggressive with chunk sizes
+  // since we won't hit the 20k limit as easily
   let chunkSizeDays: number;
+  const isShortRange = totalDays <= 14;
+  
   if (minMagnitude >= 6) {
     chunkSizeDays = 3650; // 10 years - very few M6+ events
   } else if (minMagnitude >= 5) {
@@ -149,17 +151,17 @@ async function fetchInChunks(
   } else if (minMagnitude >= 4) {
     chunkSizeDays = 180; // 6 months - moderate M4+ events
   } else if (minMagnitude >= 3) {
-    chunkSizeDays = 60; // 2 months
+    chunkSizeDays = isShortRange ? 14 : 60; // 2 weeks or 2 months
   } else if (minMagnitude >= 2) {
-    chunkSizeDays = 14; // 2 weeks - many M2+ events
+    chunkSizeDays = isShortRange ? 7 : 14; // 1 week or 2 weeks
   } else if (minMagnitude >= 1) {
-    chunkSizeDays = 7; // 1 week - lots of M1+ events
+    chunkSizeDays = isShortRange ? 7 : 7; // 1 week
   } else if (minMagnitude >= 0) {
-    chunkSizeDays = 3; // 3 days - very many M0+ events
+    chunkSizeDays = isShortRange ? 3 : 3; // 3 days
   } else {
     // For negative magnitudes (-2 to -1), there can be thousands per day
-    // Use 1 day chunks to stay under 20k limit
-    chunkSizeDays = 1;
+    // For short ranges, try 2 days; for long ranges, use 1 day
+    chunkSizeDays = isShortRange ? 2 : 1;
   }
   
   // Calculate number of chunks
@@ -236,10 +238,11 @@ async function fetchInChunks(
         onIntermediateData(allFeatures);
       }
       
-      // Increased delay between requests to avoid rate limiting
-      // USGS API can be sensitive to too many requests
+      // Delay between requests - shorter for small queries, longer for large ones
+      // This balances responsiveness vs rate limiting
       if (chunkEnd < endDate) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const delay = totalChunks <= 5 ? 100 : totalChunks <= 10 ? 250 : 500;
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     } catch (err) {
       console.error(`Error fetching chunk ${chunkStart.toISOString()} to ${chunkEnd.toISOString()}:`, err);

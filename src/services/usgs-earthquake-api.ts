@@ -7,8 +7,6 @@
  * @see https://earthquake.usgs.gov/fdsnws/event/1/
  */
 
-import { format, startOfDay } from 'date-fns';
-
 // =============================================================================
 // Types & Interfaces
 // =============================================================================
@@ -644,45 +642,58 @@ export async function fetchWorldwideEarthquakes(
 export function aggregateEarthquakesByDay(
   earthquakes: EarthquakeFeature[]
 ): DailyEarthquakeAggregate[] {
-  // Group earthquakes by day
-  const dailyMap = new Map<
-    string,
-    { magnitudes: number[]; energies: number[] }
-  >();
+  // Optimized: compute aggregates in single pass without storing individual values
+  interface DayStats {
+    count: number;
+    sumMag: number;
+    maxMag: number;
+    minMag: number;
+    totalEnergy: number;
+  }
+  
+  const dailyMap = new Map<string, DayStats>();
 
   for (const eq of earthquakes) {
-    const date = format(startOfDay(new Date(eq.properties.time)), 'yyyy-MM-dd');
+    // Fast date extraction: avoid creating Date objects when possible
+    // eq.properties.time is milliseconds since epoch
+    const d = new Date(eq.properties.time);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+    
     const magnitude = eq.properties.mag ?? 0;
     const energy = calculateSeismicEnergy(magnitude);
 
-    if (!dailyMap.has(date)) {
-      dailyMap.set(date, { magnitudes: [], energies: [] });
+    const existing = dailyMap.get(dateKey);
+    if (existing) {
+      existing.count++;
+      existing.sumMag += magnitude;
+      existing.totalEnergy += energy;
+      if (magnitude > existing.maxMag) existing.maxMag = magnitude;
+      if (magnitude < existing.minMag) existing.minMag = magnitude;
+    } else {
+      dailyMap.set(dateKey, {
+        count: 1,
+        sumMag: magnitude,
+        maxMag: magnitude,
+        minMag: magnitude,
+        totalEnergy: energy,
+      });
     }
-
-    const dayData = dailyMap.get(date)!;
-    dayData.magnitudes.push(magnitude);
-    dayData.energies.push(energy);
   }
 
   // Convert to aggregates
   const aggregates: DailyEarthquakeAggregate[] = [];
 
-  for (const [date, data] of dailyMap.entries()) {
-    const { magnitudes, energies } = data;
-    const count = magnitudes.length;
-
-    // Use reduce instead of Math.max/min spread to avoid stack overflow with large arrays
-    const maxMagnitude = magnitudes.reduce((max, m) => m > max ? m : max, magnitudes[0]);
-    const minMagnitude = magnitudes.reduce((min, m) => m < min ? m : min, magnitudes[0]);
-
+  for (const [date, stats] of dailyMap.entries()) {
     aggregates.push({
       date,
-      count,
-      avgMagnitude:
-        magnitudes.reduce((sum, m) => sum + m, 0) / count,
-      maxMagnitude,
-      minMagnitude,
-      totalEnergy: energies.reduce((sum, e) => sum + e, 0),
+      count: stats.count,
+      avgMagnitude: stats.sumMag / stats.count,
+      maxMagnitude: stats.maxMag,
+      minMagnitude: stats.minMag,
+      totalEnergy: stats.totalEnergy,
     });
   }
 

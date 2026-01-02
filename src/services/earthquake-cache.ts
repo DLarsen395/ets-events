@@ -213,12 +213,12 @@ function isDataStale(fetchedAt: number, dateStr: string): boolean {
 
 /**
  * Query the cache for earthquakes matching the given criteria
+ * Optimized version: parallelizes reads and caches metadata lookup
  */
 export async function queryCache(query: CacheQuery): Promise<CacheResult> {
   const db = await getDB();
   const { startDate, endDate, minMagnitude, maxMagnitude, regionScope } = query;
   
-  const earthquakes: EarthquakeFeature[] = [];
   const staleDays: string[] = [];
   const cachedDays: string[] = [];
   
@@ -232,53 +232,57 @@ export async function queryCache(query: CacheQuery): Promise<CacheResult> {
     current = new Date(current.getTime() + 24 * 60 * 60 * 1000);
   }
   
-  // Check each day's metadata
-  // We need to find metadata where the stored range COVERS our requested range
-  // i.e., stored minMag <= requested minMag AND stored maxMag >= requested maxMag
-  for (const day of days) {
-    // First try exact match
-    const metaKey = getDailyMetaKey(day, regionScope, minMagnitude, maxMagnitude);
-    let meta = await db.get('dailyMeta', metaKey);
-    
-    // If no exact match, look for a broader range that covers our request
-    if (!meta) {
-      // Get all metadata to find a covering range
-      // Note: The 'date' field is actually the full key like "2025-01-01|us|4|10"
-      const allMeta = await db.getAll('dailyMeta');
-      
-      // Filter to this day and region, then check if any cover our magnitude range
-      for (const candidate of allMeta) {
-        // Check if this candidate covers our requested range
-        // The date field is the full key, so we use the stored regionScope, minMagnitude, maxMagnitude fields
-        const candidateDay = candidate.date.split('|')[0]; // Extract just the date part
-        if (candidateDay === day && 
-            candidate.regionScope === regionScope &&
-            candidate.minMagnitude <= minMagnitude && 
-            candidate.maxMagnitude >= maxMagnitude) {
-          meta = candidate;
-          break;
-        }
-      }
-    }
-    
-    if (!meta || isDataStale(meta.fetchedAt, day)) {
-      staleDays.push(day);
-    } else {
-      cachedDays.push(day);
-      
-      // Get earthquakes for this day AND region from cache using compound key
-      const cacheKey = `${day}|${regionScope}`;
-      const dayEarthquakes = await db.getAllFromIndex('earthquakes', 'by-cache-key', cacheKey);
-      
-      // Filter by magnitude range and add to results
-      for (const eq of dayEarthquakes) {
-        const mag = eq.properties.mag ?? 0;
-        if (mag >= minMagnitude && mag <= maxMagnitude) {
-          earthquakes.push(eq);
-        }
+  // Load all metadata once (more efficient than per-day lookups for small caches)
+  // For large caches, we could optimize this further with an index
+  const allMeta = await db.getAll('dailyMeta');
+  
+  // Build a map for quick lookup: day -> metadata that covers our request
+  const metaByDay = new Map<string, DailyMeta>();
+  for (const candidate of allMeta) {
+    const candidateDay = candidate.date.split('|')[0];
+    if (candidate.regionScope === regionScope &&
+        candidate.minMagnitude <= minMagnitude && 
+        candidate.maxMagnitude >= maxMagnitude) {
+      // Only keep if not stale
+      if (!isDataStale(candidate.fetchedAt, candidateDay)) {
+        metaByDay.set(candidateDay, candidate);
       }
     }
   }
+  
+  // Categorize days as cached or stale
+  for (const day of days) {
+    if (metaByDay.has(day)) {
+      cachedDays.push(day);
+    } else {
+      staleDays.push(day);
+    }
+  }
+  
+  // If no cached days, return early
+  if (cachedDays.length === 0) {
+    return {
+      earthquakes: [],
+      staleDays,
+      cachedDays,
+      isComplete: false,
+    };
+  }
+  
+  // Fetch earthquakes for all cached days in parallel
+  const earthquakePromises = cachedDays.map(async (day) => {
+    const cacheKey = `${day}|${regionScope}`;
+    const dayEarthquakes = await db.getAllFromIndex('earthquakes', 'by-cache-key', cacheKey);
+    
+    // Filter by magnitude range
+    return dayEarthquakes.filter(eq => {
+      const mag = eq.properties.mag ?? 0;
+      return mag >= minMagnitude && mag <= maxMagnitude;
+    });
+  });
+  
+  const earthquakeArrays = await Promise.all(earthquakePromises);
+  const earthquakes = earthquakeArrays.flat();
   
   return {
     earthquakes,
@@ -290,6 +294,7 @@ export async function queryCache(query: CacheQuery): Promise<CacheResult> {
 
 /**
  * Store earthquakes in the cache
+ * Optimized: batches writes without awaiting each one
  */
 export async function storeEarthquakes(
   earthquakes: EarthquakeFeature[],
@@ -311,52 +316,62 @@ export async function storeEarthquakes(
   }
   
   const dates = Array.from(byDate.keys()).sort();
-  let step = 0;
   const totalSteps = dates.length;
   
+  onProgress?.({
+    operation: 'storing',
+    currentStep: 0,
+    totalSteps,
+    message: `Caching ${earthquakes.length} events across ${totalSteps} days...`,
+    startedAt: Date.now(),
+  });
+  
   // Store earthquakes and update metadata for each day
+  // Use a single transaction for all writes
   const tx = db.transaction(['earthquakes', 'dailyMeta'], 'readwrite');
+  const eqStore = tx.objectStore('earthquakes');
+  const metaStore = tx.objectStore('dailyMeta');
+  
+  const now = Date.now();
+  const writePromises: Promise<unknown>[] = [];
   
   for (const dateStr of dates) {
-    step++;
-    
-    onProgress?.({
-      operation: 'storing',
-      currentStep: step,
-      totalSteps,
-      message: `Caching ${dateStr}...`,
-      startedAt: Date.now(),
-      currentDate: dateStr,
-    });
-    
     const dayEarthquakes = byDate.get(dateStr)!;
-    const now = Date.now();
     const cacheKey = `${dateStr}|${regionScope}`;
     
-    // Store each earthquake with region info
+    // Queue all earthquake writes (don't await individually)
     for (const eq of dayEarthquakes) {
-      await tx.objectStore('earthquakes').put({
+      writePromises.push(eqStore.put({
         ...eq,
         _cacheDate: dateStr,
         _cachedAt: now,
         _regionScope: regionScope,
         _cacheKey: cacheKey,
-      });
+      }));
     }
     
-    // Update daily metadata
+    // Queue metadata write
     const metaKey = getDailyMetaKey(dateStr, regionScope, minMagnitude, maxMagnitude);
-    await tx.objectStore('dailyMeta').put({
+    writePromises.push(metaStore.put({
       date: metaKey,
       fetchedAt: now,
       eventCount: dayEarthquakes.length,
       minMagnitude,
       maxMagnitude,
       regionScope,
-    });
+    }));
   }
   
+  // Wait for transaction to complete (IndexedDB batches automatically)
   await tx.done;
+  
+  onProgress?.({
+    operation: 'storing',
+    currentStep: totalSteps,
+    totalSteps,
+    message: 'Cache updated',
+    startedAt: Date.now(),
+  });
   
   // Update global cache info
   await updateCacheInfo();
