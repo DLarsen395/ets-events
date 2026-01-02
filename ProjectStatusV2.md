@@ -1,7 +1,56 @@
 # Project Status V2 - ETS Events Visualization
 
-**Date:** January 1, 2026  
-**Version:** 1.2.8 → 1.2.9 (pending)
+**Date:** January 2, 2026  
+**Version:** 1.2.9
+
+## 🔋 New Feature: Seismic Energy Release Chart (v1.2.9)
+
+### Feature Summary
+A new third chart showing cumulative seismic energy released per time period.
+
+**Visualization:**
+- **Orange Bars**: Total energy released per period (sum of all earthquakes)
+- **Cyan Line + Dots**: Average energy per earthquake
+
+**Energy Calculation:**
+Uses the Gutenberg-Richter formula: `E = 10^(1.5M + 4.8)` joules
+- A M5.0 releases ~31.6x more energy than M4.0
+- A M6.0 releases ~1,000x more energy than M4.0
+- This is the same formula used by USGS
+
+**Features:**
+- Time grouping selector (Day/Week/Month/Year)
+- Smart SI prefix formatting (J, kJ, MJ, GJ, TJ, PJ, EJ)
+- Dual Y-axes: Left for total energy, right for average energy
+- Tooltip shows: total energy, avg energy, earthquake count, avg magnitude
+- Legend for bar and line
+
+### UI Improvements
+- Tightened vertical spacing on all three charts
+- Charts now fit on screen without scrolling (most cases)
+- Reduced chart heights from 300px to 220-240px
+
+### Files Added/Modified
+
+1. **NEW: src/components/Charts/EnergyReleaseChart.tsx**
+   - Complete new chart component using Recharts ComposedChart
+   - Bars + Line overlay on same chart
+   - Custom tooltip with energy stats
+
+2. **MODIFIED: src/components/Charts/magnitudeDistributionUtils.ts**
+   - Added `EnergyDataPoint` interface
+   - Added `aggregateEnergyByTimePeriod()` function
+   - Added `formatEnergy()` for human-readable values
+   - Added `formatEnergyAxis()` for chart axis labels
+
+3. **MODIFIED: src/components/Charts/EarthquakeChartsPage.tsx**
+   - Import and render EnergyReleaseChart
+   - Tightened padding and margins
+
+4. **MODIFIED: src/components/Charts/MagnitudeDistributionChart.tsx**
+   - Tightened padding and margins
+
+---
 
 ## 🐛 Critical Bug Fixed: Data Truncation
 
@@ -137,22 +186,42 @@ After clearing cache and re-fetching 20 years of M-2+ US data:
 - [ ] Check memory usage with large datasets (no crashes)
 - [ ] Deploy to production
 
-## 🏷️ Version Bump Recommendation
+## 📋 Manual Test Checklist
 
-Bump to **1.2.9** with changelog:
-```
-## [1.2.9] - 2026-01-01
+### Energy Release Chart (v1.2.9)
+- [ ] Chart appears below Magnitude Distribution chart
+- [ ] Orange bars show total energy per period
+- [ ] Cyan line connects dots showing average energy
+- [ ] Time grouping buttons (Day/Week/Month/Year) work correctly
+- [ ] Tooltip shows: Total Energy, Avg Energy, count, avg magnitude
+- [ ] Y-axis labels use SI prefixes correctly (J, kJ, MJ, GJ, etc.)
+- [ ] Chart scales correctly for different magnitude ranges (M4+ vs M-2+)
+- [ ] Large earthquakes (M6+) should show significantly higher energy spikes
 
-### Fixed
-- Critical: Data truncation bug causing 85% data loss on large queries
-- API limit of 20k events per request now properly chunked by magnitude
-- ESLint setState-in-effect warnings
+### UI Spacing
+- [ ] All three charts fit on screen without excessive scrolling
+- [ ] Charts are not uncomfortably tight
+- [ ] Headers and grouping buttons properly aligned
 
-### Changed
-- fetchStaleDays() now respects magnitude-aware range limits
-- Progressive chart updates during incremental cache fetch
-- Reduced API request delays for faster loading
-```
+### Previous Functionality
+- [ ] Top chart (Earthquakes per Day/Week/Month/Year) still works
+- [ ] Magnitude Distribution chart still works
+- [ ] Cache stats panel shows correct information
+- [ ] Progress banner shows event count during fetch
+
+---
+
+## 🏷️ Version History
+
+### v1.2.9 (January 2, 2026)
+- ✅ Seismic Energy Release Chart added
+- ✅ Tightened chart spacing
+- ✅ Live event count during fetch
+
+### v1.2.8 (January 1, 2026)
+- ✅ Critical data truncation bug fixed
+- ✅ ESLint warnings fixed
+- ✅ Progressive chart updates during fetch
 
 ## 📈 Performance Notes
 
