@@ -242,24 +242,21 @@ export function aggregateByTimePeriodAndMagnitude(
   // If dateRange provided and grouping is 'day', fill in missing days
   if (dateRange && grouping === 'day') {
     const { startDate, endDate } = dateRange;
-    const current = new Date(Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate()
-    ));
-    const end = new Date(Date.UTC(
-      endDate.getUTCFullYear(),
-      endDate.getUTCMonth(),
-      endDate.getUTCDate(),
-      23, 59, 59, 999
-    ));
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
 
     while (current <= end) {
-      const periodKey = current.toISOString().split('T')[0];
+      // Use local date for the key
+      const year = current.getFullYear();
+      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const day = String(current.getDate()).padStart(2, '0');
+      const periodKey = `${year}-${month}-${day}`;
       if (!aggregations.has(periodKey)) {
         aggregations.set(periodKey, new Map());
       }
-      current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
+      current.setDate(current.getDate() + 1);
     }
   }
 
@@ -462,20 +459,17 @@ export function aggregateEnergyByTimePeriod(
   // If dateRange provided and grouping is 'day', fill in missing days
   if (dateRange && grouping === 'day') {
     const { startDate, endDate } = dateRange;
-    const current = new Date(Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth(),
-      startDate.getUTCDate()
-    ));
-    const end = new Date(Date.UTC(
-      endDate.getUTCFullYear(),
-      endDate.getUTCMonth(),
-      endDate.getUTCDate(),
-      23, 59, 59, 999
-    ));
+    const current = new Date(startDate);
+    current.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
 
     while (current <= end) {
-      const periodKey = current.toISOString().split('T')[0];
+      // Use local date for the key
+      const year = current.getFullYear();
+      const month = String(current.getMonth() + 1).padStart(2, '0');
+      const day = String(current.getDate()).padStart(2, '0');
+      const periodKey = `${year}-${month}-${day}`;
       if (!aggregations.has(periodKey)) {
         aggregations.set(periodKey, {
           count: 0,
@@ -483,7 +477,7 @@ export function aggregateEnergyByTimePeriod(
           totalEnergy: 0,
         });
       }
-      current.setTime(current.getTime() + 24 * 60 * 60 * 1000);
+      current.setDate(current.getDate() + 1);
     }
   }
 
