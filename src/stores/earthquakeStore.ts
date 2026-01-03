@@ -9,7 +9,6 @@ import type {
   DailyEarthquakeAggregate,
 } from '../services/usgs-earthquake-api';
 import type {
-  ChartLibrary,
   TimeRange,
   RegionScope,
   AppView,
@@ -64,15 +63,11 @@ interface EarthquakeStore {
   customStartDate: Date | null;
   customEndDate: Date | null;
 
-  // Chart settings
-  chartLibrary: ChartLibrary;
-
   // Actions
   setMinMagnitude: (mag: number) => void;
   setMaxMagnitude: (mag: number) => void;
   setTimeRange: (range: TimeRange) => void;
   setRegionScope: (scope: RegionScope) => void;
-  setChartLibrary: (library: ChartLibrary) => void;
   setCustomDateRange: (startDate: Date, endDate: Date) => void;
 
   // Data fetching
@@ -417,9 +412,6 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   customStartDate: null,
   customEndDate: null,
 
-  // Default chart settings
-  chartLibrary: 'recharts',
-
   // View setter
   setCurrentView: (view) => set({ currentView: view }),
 
@@ -458,9 +450,6 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
     set({ regionScope: scope });
     get().fetchEarthquakes();
   },
-
-  // Chart settings setter
-  setChartLibrary: (library) => set({ chartLibrary: library }),
 
   // Custom date range setter
   setCustomDateRange: (startDate, endDate) => {

@@ -25,7 +25,7 @@ import { create } from 'zustand';
 interface Store {
   // State
   events: ETSEvent[];
-  
+
   // Actions
   setEvents: (events: ETSEvent[]) => void;
 }

@@ -12,7 +12,6 @@ import {
   TIME_RANGE_OPTIONS,
   REGION_SCOPE_OPTIONS,
 } from '../../types/earthquake';
-import type { ChartLibrary } from '../../types/earthquake';
 
 const selectStyle: React.CSSProperties = {
   padding: '0.5rem 0.75rem',
@@ -50,14 +49,12 @@ export function ChartFilters() {
     maxMagnitude,
     timeRange,
     regionScope,
-    chartLibrary,
     customStartDate,
     customEndDate,
     setMinMagnitude,
     setMaxMagnitude,
     setTimeRange,
     setRegionScope,
-    setChartLibrary,
     setCustomDateRange,
     isLoading,
   } = useEarthquakeStore();
@@ -226,42 +223,6 @@ export function ChartFilters() {
             </option>
           ))}
         </select>
-      </div>
-
-      {/* Chart Library Toggle */}
-      <div>
-        <label style={labelStyle}>Chart Library</label>
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.25rem',
-            padding: '0.25rem',
-            backgroundColor: 'rgba(55, 65, 81, 0.5)',
-            borderRadius: '0.375rem',
-          }}
-        >
-          {(['recharts', 'chartjs'] as ChartLibrary[]).map((lib) => (
-            <button
-              key={lib}
-              onClick={() => setChartLibrary(lib)}
-              style={{
-                padding: '0.375rem 0.75rem',
-                fontSize: '0.875rem',
-                fontWeight: chartLibrary === lib ? '600' : '400',
-                color: chartLibrary === lib ? 'white' : '#9ca3af',
-                backgroundColor: chartLibrary === lib
-                  ? 'rgba(59, 130, 246, 0.8)'
-                  : 'transparent',
-                border: 'none',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {lib === 'recharts' ? 'Recharts' : 'Chart.js'}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Fetch Progress - embedded at bottom of filters panel */}

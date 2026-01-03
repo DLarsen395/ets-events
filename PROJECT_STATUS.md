@@ -1,9 +1,9 @@
 # ETS Events Visualization - Project Status
 
-**Last Updated**: January 2, 2026  
-**Version**: 1.2.10
+**Last Updated**: January 2, 2026
+**Version**: 1.2.11
 
-## 📊 Current Status: V1.2.10 Active Development ✅
+## 📊 Current Status: V1.2.11 Active Development ✅
 
 All core features implemented. Earthquake Charts view with enhanced visualizations and intelligent caching.
 
@@ -43,7 +43,6 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 | Auto-restart | ✅ Complete | Loops from beginning |
 | **Earthquake Charts** | | |
 | Bar Chart (Recharts) | ✅ Complete | Daily/weekly/monthly/yearly aggregation |
-| Bar Chart (Chart.js) | ✅ Complete | Alternative visualization library |
 | Magnitude Distribution | ✅ Complete | Stacked area chart with toggles |
 | Energy Release Chart | ✅ Complete | Log scale bars + avg magnitude line |
 | Pinned Filter Panel | ✅ Complete | Stays fixed while charts scroll |
@@ -81,7 +80,6 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 - ✅ Zustand 5.0.2
 - ✅ Tailwind CSS 3.4.1
 - ✅ Recharts 2.x (Chart visualizations)
-- ✅ Chart.js (Alternative chart library)
 - ✅ date-fns (Date manipulation)
 - ✅ idb (IndexedDB wrapper)
 - ✅ PNSN Tremor API integration

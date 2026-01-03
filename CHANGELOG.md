@@ -5,6 +5,32 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.11] - 2026-01-02
+
+### 🧹 Code Cleanup - Chart.js Removal
+
+Simplified the codebase by removing Chart.js and standardizing on Recharts as the sole chart library.
+
+### Removed
+- **Chart.js Integration** - Removed entire Chart.js implementation
+  - Deleted `ChartJSBarChart.tsx` component
+  - Removed `chartLibrary` toggle from filter panel UI
+  - Removed `chartLibrary` state and `setChartLibrary` action from Zustand store
+  - Removed `ChartLibrary` type definition
+  - Uninstalled `chart.js` and `react-chartjs-2` npm packages
+
+### Changed
+- **Chart Rendering** - All charts now use Recharts exclusively
+  - Simplified EarthquakeChartsPage to render Recharts directly (no conditional)
+  - Cleaner, more maintainable codebase
+
+### Technical Notes
+- Reduced bundle size by removing Chart.js dependencies
+- Streamlined state management (fewer store properties)
+- All three charts (Bar, Magnitude Distribution, Energy Release) continue to work with Recharts
+
+---
+
 ## [1.2.10] - 2026-01-02
 
 ### 🎨 UI/UX Improvements

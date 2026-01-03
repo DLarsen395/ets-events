@@ -3,13 +3,13 @@
 An interactive web application for visualizing Pacific Northwest ETS (Episodic Tremor and Slip) seismic events with real-time playback, live data integration, and mobile-responsive design.
 
 ![ETS Events Map](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.2.10-blue)
+![Version](https://img.shields.io/badge/Version-1.2.11-blue)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
-**GitHub Repository**: https://github.com/DLarsen395/ets-events  
+**GitHub Repository**: https://github.com/DLarsen395/ets-events
 **Container Registry**: https://ghcr.io/dlarsen395/ets-events
 
 ## 🌟 Features
@@ -32,7 +32,6 @@ An interactive web application for visualizing Pacific Northwest ETS (Episodic T
 - **Energy Release Chart** - Seismic energy on logarithmic scale with average magnitude line
 - **USGS API Integration** - Chunked fetching for large date ranges with intelligent caching
 - **IndexedDB Caching** - Historical data cached permanently, recent data refreshed after 24h
-- **Dual Chart Libraries** - Choose between Recharts or Chart.js for visualizations
 - **Pinned Filter Panel** - Time range and filter controls stay visible while charts scroll
 
 ### UI Components

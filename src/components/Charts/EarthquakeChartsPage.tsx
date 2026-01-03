@@ -7,7 +7,6 @@ import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
-import { ChartJSBarChart } from './ChartJSBarChart';
 import { MagnitudeDistributionChart } from './MagnitudeDistributionChart';
 import { EnergyReleaseChart } from './EnergyReleaseChart';
 import { CacheStatusPanel } from './CacheStatusPanel';
@@ -29,7 +28,6 @@ export function EarthquakeChartsPage() {
   const {
     earthquakes,
     dailyAggregates,
-    chartLibrary,
     isLoading,
     error,
     lastFetched,
@@ -278,11 +276,7 @@ export function EarthquakeChartsPage() {
 
           {/* Chart */}
           {topChartData.length > 0 && (
-            chartLibrary === 'recharts' ? (
-              <RechartsBarChart data={topChartData} />
-            ) : (
-              <ChartJSBarChart data={topChartData} />
-            )
+            <RechartsBarChart data={topChartData} />
           )}
 
           {/* No data state */}

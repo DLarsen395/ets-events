@@ -41,11 +41,6 @@ export type {
 } from '../services/usgs-earthquake-api';
 
 /**
- * Chart library options
- */
-export type ChartLibrary = 'recharts' | 'chartjs';
-
-/**
  * App view/page options
  */
 export type AppView = 'ets-events' | 'earthquake-charts';
