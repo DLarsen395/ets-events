@@ -274,7 +274,9 @@ export function EnergyReleaseChart({
     };
   }, [chartData]);
 
-  if (earthquakes.length === 0) {
+  // Only hide if we have no chart data (no days in range)
+  // When chartData exists (filled by dateRange), show the chart even with 0 earthquakes
+  if (chartData.length === 0) {
     return null;
   }
 
