@@ -59,18 +59,20 @@ export function EarthquakeChartsPage() {
   }, [timeRange, customStartDate, customEndDate]);
 
   // Calculate the actual date range for filling in missing days
-  const dateRange = useMemo(() => {
+  // IMPORTANT: endDate must always be TODAY (current local date)
+  // Not memoized to ensure it always uses the current date
+  const dateRange = (() => {
     const endDate = new Date();
-    let startDate: Date;
-
+    endDate.setHours(23, 59, 59, 999); // End of today
+    
     if (timeRange === 'custom' && customStartDate && customEndDate) {
-      startDate = customStartDate;
-      return { startDate, endDate: customEndDate };
+      return { startDate: customStartDate, endDate: customEndDate };
     }
 
-    startDate = subDays(endDate, daysInRange);
+    const startDate = subDays(new Date(), daysInRange);
+    startDate.setHours(0, 0, 0, 0); // Start of that day
     return { startDate, endDate };
-  }, [timeRange, customStartDate, customEndDate, daysInRange]);
+  })();
 
   // Update top chart grouping when date range changes
   useEffect(() => {
