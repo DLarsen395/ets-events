@@ -5,6 +5,55 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.12] - 2026-01-02
+
+### 🔄 Auto-Refresh for Real-Time Earthquake Updates
+
+New auto-refresh system that periodically checks for new earthquakes, ensuring researchers always have the latest data during active research sessions.
+
+### Added
+- **Auto-Refresh System** - Automatically fetches new earthquakes at configurable intervals
+  - ON by default, toggle in Cache panel to enable/disable
+  - Selectable intervals: 1, 5, 15, 30, or 60 minutes
+  - Shows last auto-refresh timestamp
+  - Settings persist in localStorage across sessions
+  
+- **Smart Top-Off Fetching** - Efficient incremental updates
+  - Only fetches events since the most recent known earthquake
+  - Typically completes in under 1 second
+  - Automatically pauses during manual fetches to avoid conflicts
+  - Smart gap detection handles various scenarios:
+    - Gap < interval: Skip (too soon)
+    - Gap < 24 hours: Quick top-off fetch
+    - Gap < 28 days: Normal refresh (cache handles optimization)
+    - Gap >= 28 days: Full refresh (historical boundary crossed)
+
+- **Visual Indicators** - Clear feedback on auto-refresh activity
+  - Spinning refresh icon (blue) on right side of filter panel during fetch
+  - Pulsing earthquake icon (orange) when new events found
+  - Pulses 3 times (1s fade in, 1s fade out) then disappears
+  - No indicator if no new events found
+
+- **`useAutoRefresh` Hook** - Reusable timer management
+  - Manages interval timer with proper cleanup
+  - Only active on Charts page (not Map page)
+  - Handles page activation/deactivation
+  - Callbacks for refresh lifecycle events
+
+- **`topOffRecentEvents` Store Action** - Efficient data merging
+  - Finds newest event timestamp in current data
+  - Fetches only from that point to now
+  - Deduplicates and merges with existing data
+  - Updates cache and refreshes stats
+
+### Changed
+- **Cache Status Panel** - Now includes auto-refresh controls
+  - Auto-Refresh section with ON/OFF toggle
+  - Interval selector buttons (1, 5, 15, 30, 60 min)
+  - Last auto-refresh timestamp display
+
+---
+
 ## [1.2.11] - 2026-01-02
 
 ### 🧹 Code Cleanup - Chart.js Removal

@@ -4,7 +4,7 @@
  */
 
 import { useEffect } from 'react';
-import { useCacheStore } from '../../stores/cacheStore';
+import { useCacheStore, AUTO_REFRESH_INTERVALS } from '../../stores/cacheStore';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { format } from 'date-fns';
 
@@ -21,6 +21,9 @@ export function CacheStatusPanel() {
     clearStale,
     resetDB,
     progress,
+    autoRefresh,
+    setAutoRefreshEnabled,
+    setAutoRefreshInterval,
   } = useCacheStore();
 
   const { refreshData, isLoading } = useEarthquakeStore();
@@ -120,6 +123,86 @@ export function CacheStatusPanel() {
           </button>
         </div>
       </div>
+
+      {/* Auto-Refresh Controls */}
+      {isEnabled && (
+        <div style={{
+          padding: '0.5rem',
+          marginBottom: '0.75rem',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.2)',
+          borderRadius: '0.25rem',
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.375rem',
+          }}>
+            <span style={{ fontSize: '0.7rem', color: '#9ca3af' }}>
+              Auto-Refresh
+            </span>
+            <button
+              onClick={() => setAutoRefreshEnabled(!autoRefresh.enabled)}
+              style={{
+                padding: '0.125rem 0.375rem',
+                fontSize: '0.65rem',
+                color: autoRefresh.enabled ? '#86efac' : '#9ca3af',
+                backgroundColor: autoRefresh.enabled
+                  ? 'rgba(34, 197, 94, 0.2)'
+                  : 'rgba(107, 114, 128, 0.2)',
+                border: `1px solid ${autoRefresh.enabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(107, 114, 128, 0.3)'}`,
+                borderRadius: '0.25rem',
+                cursor: 'pointer',
+              }}
+            >
+              {autoRefresh.enabled ? 'ON' : 'OFF'}
+            </button>
+          </div>
+
+          {autoRefresh.enabled && (
+            <>
+              {/* Interval selector */}
+              <div style={{
+                display: 'flex',
+                gap: '0.25rem',
+                marginBottom: '0.375rem',
+                flexWrap: 'wrap',
+              }}>
+                {AUTO_REFRESH_INTERVALS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setAutoRefreshInterval(value)}
+                    style={{
+                      padding: '0.125rem 0.375rem',
+                      fontSize: '0.6rem',
+                      color: autoRefresh.interval === value ? '#111827' : '#9ca3af',
+                      backgroundColor: autoRefresh.interval === value ? '#60a5fa' : 'transparent',
+                      border: '1px solid',
+                      borderColor: autoRefresh.interval === value ? '#60a5fa' : '#4b5563',
+                      borderRadius: '0.25rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Last auto-refresh time */}
+              <p style={{
+                fontSize: '0.6rem',
+                color: '#6b7280',
+                margin: 0,
+              }}>
+                Last auto-refresh: {autoRefresh.lastAutoRefresh
+                  ? format(new Date(autoRefresh.lastAutoRefresh), 'MMM d, h:mm:ss a')
+                  : 'Never'}
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Cache integrity warning */}
       {isEnabled && integrity && !integrity.isHealthy && (

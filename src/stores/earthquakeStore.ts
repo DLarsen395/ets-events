@@ -73,6 +73,9 @@ interface EarthquakeStore {
   // Data fetching
   fetchEarthquakes: () => Promise<void>;
   refreshData: () => Promise<void>;
+  
+  // Auto-refresh top-off (fetches only new events since last known)
+  topOffRecentEvents: () => Promise<number>;  // Returns count of new events
 }
 
 /**
@@ -694,5 +697,106 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   // Force refresh data
   refreshData: async () => {
     await get().fetchEarthquakes();
+  },
+
+  /**
+   * Top-off fetch: Get only NEW events since the most recent event in current data.
+   * This is used for auto-refresh to quickly check for new earthquakes.
+   * Returns the count of new events found.
+   */
+  topOffRecentEvents: async () => {
+    const { earthquakes, regionScope, minMagnitude, maxMagnitude, isLoading } = get();
+    const cacheStore = useCacheStore.getState();
+    
+    // Don't run if a manual fetch is in progress
+    if (isLoading) {
+      return 0;
+    }
+
+    // If no earthquakes loaded yet, can't top off - need initial fetch
+    if (earthquakes.length === 0) {
+      return 0;
+    }
+
+    try {
+      // Find the most recent event timestamp
+      let newestTimestamp = 0;
+      for (const eq of earthquakes) {
+        const time = eq.properties.time;
+        if (time > newestTimestamp) {
+          newestTimestamp = time;
+        }
+      }
+
+      // Start from 1ms after the newest event to avoid duplicates
+      const startTime = new Date(newestTimestamp + 1);
+      const endTime = new Date();
+
+      // If start time is in the future or same as now, nothing to fetch
+      if (startTime >= endTime) {
+        return 0;
+      }
+
+      // Use the appropriate fetch function based on region
+      const fetchFn = regionScope === 'us' ? fetchUSGSEarthquakes : fetchWorldwideEarthquakes;
+
+      // Fetch new events (this should be very fast - small time window)
+      const response = await fetchFn({
+        starttime: startTime,
+        endtime: endTime,
+        minmagnitude: minMagnitude,
+        maxmagnitude: maxMagnitude === 10 ? undefined : maxMagnitude,
+      });
+
+      const newFeatures = response.features;
+
+      if (newFeatures.length === 0) {
+        return 0;
+      }
+
+      // Deduplicate against existing earthquakes
+      const existingIds = new Set(earthquakes.map(eq => eq.id));
+      const trulyNewFeatures = newFeatures.filter(eq => !existingIds.has(eq.id));
+
+      if (trulyNewFeatures.length === 0) {
+        return 0;
+      }
+
+      // Merge new events into existing data
+      const mergedEarthquakes = [...earthquakes, ...trulyNewFeatures];
+      
+      // Sort by time (newest first for consistency)
+      mergedEarthquakes.sort((a, b) => b.properties.time - a.properties.time);
+
+      // Store new events in cache if caching is enabled
+      if (cacheStore.isEnabled) {
+        await storeEarthquakes(trulyNewFeatures, {
+          startDate: startTime,
+          endDate: endTime,
+          minMagnitude,
+          maxMagnitude,
+          regionScope,
+        });
+      }
+
+      // Update aggregates and summary
+      const dailyAggregates = aggregateEarthquakesByDay(mergedEarthquakes);
+      const summary = getEarthquakeSummary(mergedEarthquakes);
+
+      set({
+        earthquakes: mergedEarthquakes,
+        dailyAggregates,
+        summary,
+        lastFetched: new Date(),
+      });
+
+      // Refresh cache stats
+      cacheStore.refreshStats();
+
+      return trulyNewFeatures.length;
+    } catch (err) {
+      console.error('Error during top-off fetch:', err);
+      return 0;
+    }
   },
 }));

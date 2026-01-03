@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
+import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { ChartFilters } from './ChartFilters';
 import { EarthquakeSummary } from './EarthquakeSummary';
 import { RechartsBarChart } from './RechartsBarChart';
@@ -39,6 +40,9 @@ export function EarthquakeChartsPage() {
     customStartDate,
     customEndDate,
   } = useEarthquakeStore();
+
+  // Auto-refresh hook - active when on this page
+  const { isRefreshing, newEventsFound } = useAutoRefresh(true);
 
   // Time grouping for top chart
   const [topChartGrouping, setTopChartGrouping] = useState<TimeGrouping>('day');
@@ -120,7 +124,10 @@ export function EarthquakeChartsPage() {
         {/* Pinned filter section - doesn't scroll */}
         <div style={{ padding: '0.75rem 0.75rem 0 0.75rem', flexShrink: 0 }}>
           {/* Filters with embedded progress */}
-          <ChartFilters />
+          <ChartFilters 
+            isAutoRefreshing={isRefreshing}
+            newEventsFound={newEventsFound}
+          />
         </div>
 
         {/* Scrollable charts area */}

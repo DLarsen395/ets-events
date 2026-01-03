@@ -1,11 +1,11 @@
 # ETS Events Visualization - Project Status
 
 **Last Updated**: January 2, 2026
-**Version**: 1.2.11
+**Version**: 1.2.12
 
-## 📊 Current Status: V1.2.11 Active Development ✅
+## 📊 Current Status: V1.2.12 Active Development ✅
 
-All core features implemented. Earthquake Charts view with enhanced visualizations and intelligent caching.
+All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh.
 
 ### ✅ All Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -48,6 +48,7 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 | Pinned Filter Panel | ✅ Complete | Stays fixed while charts scroll |
 | Fetch Progress | ✅ Complete | Embedded in filter panel |
 | Cache Status Panel | ✅ Complete | Stats, management controls |
+| Auto-Refresh | ✅ Complete | Configurable intervals (1-60 min) |
 | **UI Components** | | |
 | Legend | ✅ Complete | Depth + magnitude guide |
 | Statistics Panel | ✅ Complete | Real-time metrics |

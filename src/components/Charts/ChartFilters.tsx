@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { format, subYears } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { useCacheStore } from '../../stores/cacheStore';
+import { AutoRefreshIndicator } from './AutoRefreshIndicator';
 import {
   MIN_MAGNITUDE_OPTIONS,
   MAX_MAGNITUDE_OPTIONS,
@@ -43,7 +44,14 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
 };
 
-export function ChartFilters() {
+interface ChartFiltersProps {
+  /** Whether auto-refresh is currently in progress */
+  isAutoRefreshing?: boolean;
+  /** Number of new events found by auto-refresh */
+  newEventsFound?: number;
+}
+
+export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: ChartFiltersProps) {
   const {
     minMagnitude,
     maxMagnitude,
@@ -224,6 +232,16 @@ export function ChartFilters() {
           ))}
         </select>
       </div>
+
+      {/* Spacer to push auto-refresh indicator to the right */}
+      <div style={{ flex: 1 }} />
+
+      {/* Auto-refresh indicator - right side of panel */}
+      <AutoRefreshIndicator
+        isRefreshing={isAutoRefreshing}
+        newEventsFound={newEventsFound}
+        containerHeight={40}
+      />
 
       {/* Fetch Progress - embedded at bottom of filters panel */}
       <FetchProgressBar />
