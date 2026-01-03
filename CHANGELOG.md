@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Blank Screen Crash** - Fixed JavaScript crash causing app to go blank
-  - Root cause: `avgMagnitude` was typed as `number` but code used `null as unknown as number` 
+  - Root cause: `avgMagnitude` was typed as `number` but code used `null as unknown as number`
   - Calling `.toFixed(1)` on `null` crashed React rendering
   - Properly typed `avgMagnitude` as `number | null` in `EnergyDataPoint` interface
   - Tooltip now conditionally renders avg magnitude section only when data exists
