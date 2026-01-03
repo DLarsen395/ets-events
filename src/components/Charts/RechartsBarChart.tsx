@@ -125,6 +125,21 @@ export function RechartsBarChart({ data, title }: RechartsBarChartProps) {
   // The date field might already be a formatted string (for week/month/year grouping)
   // or an ISO date string (for day grouping), so we check before parsing
   const chartData = data.map(d => {
+    // For YYYY-MM-DD format dates, parse components directly to avoid timezone issues
+    // new Date("2026-01-01") would be interpreted as UTC midnight, which shows as
+    // Dec 31 in US timezones. Instead, we parse the components to create local midnight.
+    const isoMatch = d.date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    
+    if (isoMatch) {
+      // Parse as LOCAL date to avoid timezone shift
+      const [, year, month, day] = isoMatch;
+      const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      return {
+        ...d,
+        label: localDate.toLocaleDateString('en-US', dateFormat),
+      };
+    }
+    
     // Try to parse as date - if it fails or gives Invalid Date, use the original string
     const parsedDate = new Date(d.date);
     const isValidDate = !isNaN(parsedDate.getTime());

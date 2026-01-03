@@ -5,6 +5,27 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.13] - 2026-01-03
+
+### 🐛 Fixed Chart X-Axis Date Label Timezone Bug
+
+Fixed a critical timezone bug where chart X-axis date labels were showing the wrong date (one day earlier).
+
+### Fixed
+- **Chart Date Labels Off By One Day** - Fixed timezone parsing issue in `RechartsBarChart.tsx`
+  - Root cause: `new Date("2026-01-01")` was interpreted as UTC midnight
+  - In US timezones (e.g., PST UTC-8), this displayed as Dec 31 at 4:00 PM
+  - Fix: Parse YYYY-MM-DD dates as local midnight instead of UTC midnight
+  - Chart bars now correctly align with their labeled dates
+
+### Added
+- **Debug Logging** - Added comprehensive console debugging for chart data flow
+  - `📦 Earthquake Store Final Data` - Logs when data is fetched
+  - `🔍 Chart Data Debug` - Logs when chart processes data
+  - `📊 Filled Chart Data` - Logs final data sent to chart
+  - Includes M4+ earthquake details with timestamps
+  - Helps diagnose data and date issues
+
 ## [1.2.12] - 2026-01-02
 
 ### 🔄 Auto-Refresh for Real-Time Earthquake Updates
