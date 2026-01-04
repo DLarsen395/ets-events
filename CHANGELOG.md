@@ -5,6 +5,23 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.18] - 2026-01-03
+
+### 🐛 Critical Fix - Charts 2 & 3 Missing Today's Date
+
+### Fixed
+- **Jan 3 Not Showing on Charts 2 & 3** - Root cause: timezone bug in `getDateFromPeriodKey()`
+  - `new Date("2026-01-03")` parses as UTC midnight = Jan 2 @ 4pm PST
+  - When formatting labels, it showed "Jan 2" instead of "Jan 3"
+  - Fixed by parsing YYYY-MM-DD as local time: `new Date(year, month-1, day)`
+  - Debug logging confirmed data WAS filled (8 days) but displayed wrong dates
+
+### Technical Details
+The fill logic created period keys using local time ("2026-01-03"), but
+`getDateFromPeriodKey()` converted them back using `new Date(key)` which
+interprets ISO date strings as UTC. The fix parses the components to create
+local midnight instead.
+
 ## [1.2.17] - 2026-01-03
 
 ### 🐛 Critical Bug Fix - Charts 2 & 3 Data Flow

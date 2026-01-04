@@ -207,10 +207,17 @@ export function getDateFromPeriodKey(key: string, grouping: TimeGrouping): Date 
       }
       return new Date();
     }
-    case 'day':
-      return new Date(key);
-    default:
-      return new Date(key);
+    case 'day': {
+      // Parse YYYY-MM-DD as LOCAL time, not UTC
+      // new Date("2026-01-03") parses as UTC midnight which is wrong timezone
+      const [year, month, day] = key.split('-').map(Number);
+      return new Date(year, month - 1, day);  // Local midnight
+    }
+    default: {
+      // Parse YYYY-MM-DD as LOCAL time
+      const [year, month, day] = key.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
   }
 }
 
