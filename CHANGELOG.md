@@ -16,7 +16,7 @@ This release consolidates versions 1.2.10 through 1.2.18 into a stable release. 
   - Earthquakes by Year/Month/Week/Day - Bar chart with event counts
   - Magnitude Distribution Over Time - Stacked area chart with toggleable ranges
   - Seismic Energy Released - Log-scale bars with average magnitude line
-  
+
 - **Intelligent Caching System**
   - IndexedDB-based caching with 28-day historical/recent split
   - Progressive fetch with visual progress indicator
