@@ -8,7 +8,7 @@
 
 ## 📋 Executive Summary
 
-This document outlines the architectural plan for transitioning the ETS Events application from a client-side data fetching model to a server-side database architecture. The goal is to:
+This document outlines the architectural plan for transitioning the SeismiStats application from a client-side data fetching model to a server-side database architecture. The goal is to:
 
 1. **Centralize earthquake data** in a server-side database
 2. **Fetch USGS data once** to prevent API rate limiting from multiple users
@@ -71,7 +71,7 @@ Issues:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     ETS EVENTS API SERVER                       │
+│                     SEISMISTATS API SERVER                      │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │  Backend API (Fastify/NestJS + TypeScript)                 │ │
 │  │  ├── /api/charts/daily-counts                              │ │
@@ -210,7 +210,7 @@ version: '3.8'
 services:
   # Frontend (existing, modified)
   frontend:
-    image: ghcr.io/dlarsen395/ets-events:v2
+    image: ghcr.io/dlarsen395/seismistats:v2
     depends_on:
       - api
     networks:
@@ -220,9 +220,9 @@ services:
 
   # New: API Server
   api:
-    image: ghcr.io/dlarsen395/ets-events-api:latest
+    image: ghcr.io/dlarsen395/seismistats-api:latest
     environment:
-      - DATABASE_URL=postgresql://ets:${DB_PASSWORD}@db:5432/ets_events
+      - DATABASE_URL=postgresql://seismistats:${DB_PASSWORD}@db:5432/seismistats
       - NODE_ENV=production
     depends_on:
       db:
@@ -237,18 +237,18 @@ services:
   db:
     image: timescale/timescaledb-ha:pg16-ts2.14-postgis
     environment:
-      - POSTGRES_USER=ets
+      - POSTGRES_USER=seismistats
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=ets_events
+      - POSTGRES_DB=seismistats
     volumes:
-      - ets_pgdata:/home/postgres/pgdata
+      - seismistats_pgdata:/home/postgres/pgdata
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ets -d ets_events"]
+      test: ["CMD-SHELL", "pg_isready -U seismistats -d seismistats"]
 
 volumes:
-  ets_pgdata:
+  seismistats_pgdata:
 
 networks:
   npm-proxy:

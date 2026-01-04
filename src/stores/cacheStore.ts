@@ -48,7 +48,7 @@ interface AutoRefreshState {
 }
 
 // Local storage key for persisting auto-refresh settings
-const AUTO_REFRESH_STORAGE_KEY = 'ets-events-auto-refresh';
+const AUTO_REFRESH_STORAGE_KEY = 'seismistats-auto-refresh';
 
 // Load saved auto-refresh settings from localStorage
 function loadAutoRefreshSettings(): Partial<AutoRefreshState> {

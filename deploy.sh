@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# ETS Events - Docker Deployment Script
+# SeismiStats - Docker Deployment Script
 # For Docker Swarm with Nginx Proxy Manager
 
 set -e
 
-echo "🚀 ETS Events Deployment Script"
+echo "🚀 SeismiStats Deployment Script"
 echo "================================"
 
 # Check if .env file exists
@@ -26,20 +26,20 @@ fi
 # Build the image
 echo ""
 echo "📦 Building Docker image..."
-docker build --build-arg VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN -t ets-events:latest .
+docker build --build-arg VITE_MAPBOX_TOKEN=$VITE_MAPBOX_TOKEN -t seismistats:latest .
 
 echo ""
 echo "✅ Build complete!"
 
 # Check if stack is already deployed
-if docker stack ps ets &>/dev/null; then
+if docker stack ps seismistats &>/dev/null; then
     echo ""
     echo "🔄 Updating existing stack..."
-    docker service update --force ets_ets-events
+    docker service update --force seismistats_seismistats
 else
     echo ""
     echo "🆕 Deploying new stack..."
-    docker stack deploy -c docker-compose.ets-events.yml ets
+    docker stack deploy -c docker-compose.seismistats.yml seismistats
 fi
 
 echo ""
@@ -48,12 +48,12 @@ echo ""
 echo "📋 Next steps:"
 echo "1. Open Nginx Proxy Manager: http://your-server:81"
 echo "2. Add Proxy Host:"
-echo "   - Domain: ets.yourdomain.com"
-echo "   - Forward Hostname: ets_ets-events"
+echo "   - Domain: seismistats.yourdomain.com"
+echo "   - Forward Hostname: seismistats_seismistats"
 echo "   - Forward Port: 80"
 echo "3. Enable SSL (Let's Encrypt)"
 echo "4. Add Access List for authentication"
 echo ""
 echo "📊 Monitor deployment:"
-echo "   docker service ps ets_ets-events"
-echo "   docker service logs -f ets_ets-events"
+echo "   docker service ps seismistats_seismistats"
+echo "   docker service logs -f seismistats_seismistats"

@@ -1,9 +1,28 @@
 # Changelog
 
-All notable changes to the ETS Events Visualization project will be documented in this file.
+All notable changes to the SeismiStats Visualization project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.0-alpha.1] - 2026-01-04
+
+### 🎨 SeismiStats Rebrand
+
+This release rebrands the project from "ETS Events" to "SeismiStats" to better reflect the broader scope of seismic data visualization.
+
+### Changed
+- **Project Name** - Renamed from "ETS Events" to "SeismiStats"
+- **Repository** - Now at `github.com/DLarsen395/seismistats`
+- **Container Registry** - Now at `ghcr.io/dlarsen395/seismistats`
+- **Docker Stack** - Service name changed to `seismistats`
+- **Documentation** - Updated all docs with new branding
+
+### Notes
+- ETS (Episodic Tremor and Slip) references in scientific contexts remain unchanged
+- Production URL `ets.home.hushrush.com` will be migrated to `seismistats.home.hushrush.com` in future release
+
+---
 
 ## [1.2.9] - 2026-01-04
 
@@ -502,7 +521,7 @@ Replaced Mapbox GL JS with MapLibre GL JS to eliminate API key requirements and 
 
 ### Changed
 - **Dockerfile** - No longer requires build-time token argument
-- **docker-compose.ets-events.yml** - Now includes `MAPBOX_TOKEN` environment variable
+- **docker-compose.seismistats.yml** - Now includes `MAPBOX_TOKEN` environment variable
 - **Simplified Callback Interface** - `onFilteredEventsChange` no longer passes unused `currentTime`
 
 ### Documentation
@@ -514,7 +533,7 @@ Replaced Mapbox GL JS with MapLibre GL JS to eliminate API key requirements and 
 
 ### 🎉 Initial Production Release
 
-First stable release of the ETS Events Visualization application.
+First stable release of the SeismiStats Visualization application.
 
 ### Added
 
@@ -546,7 +565,7 @@ First stable release of the ETS Events Visualization application.
 
 #### Deployment
 - **Docker Multi-Stage Build** - Node.js build → Nginx production image (~50MB)
-- **GitHub Container Registry** - Published to `ghcr.io/dlarsen395/ets-events`
+- **GitHub Container Registry** - Published to `ghcr.io/dlarsen395/seismistats`
 - **Docker Swarm Support** - Stateless, swarm-safe configuration
 - **Nginx Proxy Manager Integration** - SSL termination and authentication via Access Lists
 - **Health Check Endpoint** - `/health` endpoint for container orchestration
@@ -571,12 +590,12 @@ First stable release of the ETS Events Visualization application.
 
 ## [Unreleased]
 
-### Planned for v1.1.0
+### Planned for v2.1.0
 - User-selectable color schemes
 - Keyboard shortcuts (Space = play/pause, arrows = scrub)
 - Event details popup on click
 
-### Planned for v2.0.0
+### Planned for v3.0.0
 - Event clustering at low zoom levels
 - URL state persistence
 - Export/share functionality
@@ -592,18 +611,19 @@ First stable release of the ETS Events Visualization application.
 npm run dev
 
 # Build and push
-docker build -t ets-events:latest --build-arg "VITE_MAPBOX_TOKEN=your_token" .
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
-docker push ghcr.io/dlarsen395/ets-events:latest
+docker build -t seismistats:latest --build-arg "VITE_MAPBOX_TOKEN=your_token" .
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:latest
+docker push ghcr.io/dlarsen395/seismistats:latest
 ```
 
 ### Production (Portainer)
-1. Go to **Stacks** → **ets-events**
+1. Go to **Stacks** → **seismistats**
 2. Click **Update** on the service
 3. Check **Pull latest image**
 4. Deploy
 
 ---
 
-[1.0.0]: https://github.com/DLarsen395/ets-events/releases/tag/v1.0.0
-[Unreleased]: https://github.com/DLarsen395/ets-events/compare/v1.0.0...HEAD
+[2.0.0-alpha.1]: https://github.com/DLarsen395/seismistats/releases/tag/v2.0.0-alpha.1
+[1.0.0]: https://github.com/DLarsen395/seismistats/releases/tag/v1.0.0
+[Unreleased]: https://github.com/DLarsen395/seismistats/compare/v2.0.0-alpha.1...HEAD

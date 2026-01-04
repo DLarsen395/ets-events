@@ -1,13 +1,17 @@
-# GitHub Copilot Instructions for ETS Events Visualization Project
+# GitHub Copilot Instructions for SeismiStats Project
 
-This is a React + TypeScript + Vite application for visualizing ETS seismic events with temporal playback.
+This is a React + TypeScript + Vite application for visualizing seismic events (ETS tremor and USGS earthquakes) with temporal playback and charting.
+
+## Project Naming Convention
+- **Brand/Display**: SeismiStats (CamelCase)
+- **Technical** (repo, package, docker): seismistats (lowercase, no hyphens)
 
 ## Project Versions
 
 ### V1.x (Current - Complete)
 - **Frontend-only architecture** - Client fetches data directly from USGS/PNSN APIs
 - **IndexedDB caching** - Browser-side data persistence
-- **Status**: Production deployed at https://ets.home.hushrush.com
+- **Status**: Production deployed at https://seismistats.home.hushrush.com (or legacy: ets.home.hushrush.com)
 
 ### V2.x (Planned)
 - **Server-side database** - TimescaleDB + PostGIS for centralized earthquake storage
@@ -181,7 +185,7 @@ git push origin v2.0.0
 ### Docker Image Building
 - Build locally with `docker build`
 - Test locally before pushing to GHCR
-- Tag with version: `docker tag ... ghcr.io/dlarsen395/ets-events-api:v2.0.0`
+- Tag with version: `docker tag ... ghcr.io/dlarsen395/seismistats-api:v2.0.0`
 
 ### Production Deployment
 - Only deploy tagged versions to Docker Swarm
@@ -254,5 +258,5 @@ interface ApiResponse<T> {
 ├── src/                    # Frontend (existing)
 ├── docs/                   # Architecture docs (NEW)
 ├── docker-compose.v2.yml   # Full stack compose (NEW)
-└── docker-compose.ets-events.yml  # V1 compose (existing)
+└── docker-compose.seismistats.yml  # V1 compose (existing)
 ```

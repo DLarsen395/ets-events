@@ -1,9 +1,9 @@
-# ETS Events - Docker Deployment Script  (PowerShell)
+# SeismiStats - Docker Deployment Script  (PowerShell)
 # For Docker Swarm with Nginx Proxy Manager
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "🚀 ETS Events Deployment Script" -ForegroundColor Cyan
+Write-Host "🚀 SeismiStats Deployment Script" -ForegroundColor Cyan
 Write-Host "================================" -ForegroundColor Cyan
 
 # Check if .env file exists
@@ -30,21 +30,21 @@ if ([string]::IsNullOrEmpty($MAPBOX_TOKEN)) {
 # Build the image
 Write-Host ""
 Write-Host "📦 Building Docker image..." -ForegroundColor Yellow
-docker build --build-arg VITE_MAPBOX_TOKEN=$MAPBOX_TOKEN -t ets-events:latest .
+docker build --build-arg VITE_MAPBOX_TOKEN=$MAPBOX_TOKEN -t seismistats:latest .
 
 Write-Host ""
 Write-Host "✅ Build complete!" -ForegroundColor Green
 
 # Check if stack is already deployed
-$null = docker stack ps ets-events 2>$null
+$null = docker stack ps seismistats 2>$null
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "🔄 Updating existing stack..." -ForegroundColor Yellow
-    docker service update --force ets-events_ets-events
+    docker service update --force seismistats_seismistats
 } else {
     Write-Host ""
     Write-Host "🆕 Deploying new stack..." -ForegroundColor Yellow
-    docker stack deploy -c docker-compose.ets-events.yml ets-events
+    docker stack deploy -c docker-compose.seismistats.yml seismistats
 }
 
 Write-Host ""
@@ -52,13 +52,13 @@ Write-Host "✅ Deployment complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "📋 Next steps:" -ForegroundColor Cyan
 Write-Host "1. Tag and push to GHCR:"
-Write-Host "   docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest"
-Write-Host "   docker push ghcr.io/dlarsen395/ets-events:latest"
+Write-Host "   docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:latest"
+Write-Host "   docker push ghcr.io/dlarsen395/seismistats:latest"
 Write-Host ""
 Write-Host "2. Update in Portainer:"
-Write-Host "   - Go to Stacks → ets-events"
+Write-Host "   - Go to Stacks → seismistats"
 Write-Host "   - Update service with 'Pull latest image'"
 Write-Host ""
 Write-Host "📊 Monitor deployment:" -ForegroundColor Cyan
-Write-Host "   docker service ps ets-events_ets-events"
-Write-Host "   docker service logs -f ets-events_ets-events"
+Write-Host "   docker service ps seismistats_seismistats"
+Write-Host "   docker service logs -f seismistats_seismistats"

@@ -1,4 +1,4 @@
-# Multi-stage build for ETS Events Visualization
+# Multi-stage build for SeismiStats - The Seismic Energy Explorer
 
 # Stage 1: Build the React application
 FROM node:20-alpine AS builder
@@ -21,8 +21,8 @@ RUN npm run build
 FROM nginx:alpine
 
 # OCI Labels for GitHub Container Registry linking
-LABEL org.opencontainers.image.source="https://github.com/DLarsen395/ets-events"
-LABEL org.opencontainers.image.description="ETS Seismic Events Visualization - Interactive map for Pacific Northwest tremor events"
+LABEL org.opencontainers.image.source="https://github.com/DLarsen395/seismistats"
+LABEL org.opencontainers.image.description="SeismiStats - The Seismic Energy Explorer - Interactive earthquake visualization and analysis"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Install curl for health checks

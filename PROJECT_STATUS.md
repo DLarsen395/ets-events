@@ -1,11 +1,11 @@
-# ETS Events Visualization - Project Status
+# SeismiStats Visualization - Project Status
 
 **Last Updated**: January 4, 2026
-**Version**: 1.2.9 (Release)
+**Version**: 2.0.0-alpha.1
 
-## 📊 Current Status: V1.2.9 Released ✅
+## 📊 Current Status: V2.0.0-alpha.1 - SeismiStats Rebrand ✅
 
-All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh. This is a stable release version.
+Rebranded from "ETS Events" to "SeismiStats". All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh. This is a stable release version.
 
 ### ✅ All Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -17,9 +17,15 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 
 ---
 
-## Release Notes (v1.2.9)
+## Release Notes (v2.0.0-alpha.1)
 
-### Features
+### Rebrand
+- **Project Name** - Renamed from "ETS Events" to "SeismiStats"
+- **Repository** - Now at `github.com/DLarsen395/seismistats`
+- **Container Registry** - Now at `ghcr.io/dlarsen395/seismistats`
+- **Docker Stack** - Service name changed to `seismistats`
+
+### Features (from v1.2.9)
 - **Three Chart Types** - Bar, Stacked Area, and Energy Release charts
 - **Intelligent Caching** - IndexedDB with 28-day historical/recent split
 - **Auto-Refresh** - Configurable intervals with smart top-off fetching
@@ -85,7 +91,7 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 | Development Build | ✅ Complete | npm run dev |
 | Production Build | ✅ Complete | npm run build |
 | Docker Image | ✅ Complete | Multi-stage build |
-| GHCR Push | ✅ Complete | ghcr.io/dlarsen395/ets-events |
+| GHCR Push | ✅ Complete | ghcr.io/dlarsen395/seismistats |
 | Swarm Deployment | ✅ Complete | Via Portainer |
 | NPM Integration | ✅ Complete | SSL + Auth |
 
@@ -170,7 +176,7 @@ No blocking issues
 
 ## Next Steps
 
-### Short-term Enhancements (V1.1.0)
+### Short-term Enhancements (V2.1.0)
 1. **User-Selectable Colors** (~2 hours)
    - [ ] Add color scheme picker
    - [ ] Implement theme presets (ocean, fire, earth)
@@ -183,7 +189,7 @@ No blocking issues
    - [ ] +/- = speed adjustment
    - [ ] Add help modal
 
-### Medium-term Features (V2.0.0)
+### Medium-term Features (V3.0.0)
 3. **Event Clustering** (~8 hours)
    - [ ] Implement clustering at low zoom
    - [ ] Show cluster counts
@@ -203,7 +209,7 @@ No blocking issues
    - [ ] Validate API error handling
    - [ ] Review TypeScript strict mode compliance
 
-### V2.0 - Server-Side Architecture (MAJOR - Planned)
+### V3.0 - Server-Side Architecture (MAJOR - Planned)
 See [docs/V2_SERVER_SIDE_ARCHITECTURE_PLAN.md](docs/V2_SERVER_SIDE_ARCHITECTURE_PLAN.md) for full details.
 
 **Goals:**
@@ -270,14 +276,14 @@ See [docs/V2_SERVER_SIDE_ARCHITECTURE_PLAN.md](docs/V2_SERVER_SIDE_ARCHITECTURE_
 ### Production (Docker Swarm)
 - **Status**: ✅ Deployed
 - **URL**: https://ets.home.hushrush.com
-- **Image**: `ghcr.io/dlarsen395/ets-events:latest`
-- **Stack**: `ets-events`
+- **Image**: `ghcr.io/dlarsen395/seismistats:latest`
+- **Stack**: `seismistats`
 - **Auth**: Nginx Proxy Manager Access List
 
 ### Container Registry
 - **Registry**: GitHub Container Registry
-- **Image**: `ghcr.io/dlarsen395/ets-events`
-- **Tags**: `latest`
+- **Image**: `ghcr.io/dlarsen395/seismistats`
+- **Tags**: `latest`, `2.0.0-alpha.1`
 
 ---
 

@@ -1,18 +1,19 @@
-# ETS Events - Docker Deployment Guide
+# SeismiStats - Docker Deployment Guide
 
 ## Overview
 
 This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL termination and authentication. The container image is hosted on GitHub Container Registry (GHCR).
 
 **Production URL**: https://ets.home.hushrush.com  
-**GitHub Repository**: https://github.com/DLarsen395/ets-events  
-**Container Registry**: `ghcr.io/dlarsen395/ets-events`
+**GitHub Repository**: https://github.com/DLarsen395/seismistats  
+**Container Registry**: `ghcr.io/dlarsen395/seismistats`
 
 ### Available Image Tags
 | Tag | Description |
 |-----|-------------|
 | `latest` | Most recent build |
-| `1.1.0` | MapLibre migration (current) |
+| `2.0.0-alpha.1` | SeismiStats rebrand (current) |
+| `1.1.0` | MapLibre migration |
 | `1.0.x` | Legacy Mapbox versions |
 
 ## ✨ No API Keys Required!
@@ -31,19 +32,19 @@ As of v1.1.0, this application uses **MapLibre GL JS** with free Carto basemaps.
 
 ```bash
 # Build the image
-docker build -t ets-events:latest .
+docker build -t seismistats:latest .
 ```
 
 ### 2. Test Locally (Optional)
 
 ```bash
 # Run container locally
-docker run -d -p 8080:80 --name ets-events-test ets-events:latest
+docker run -d -p 8080:80 --name seismistats-test seismistats:latest
 
 # Test at http://localhost:8080
 
 # Clean up
-docker stop ets-events-test && docker rm ets-events-test
+docker stop seismistats-test && docker rm seismistats-test
 ```
 
 ### 3. Push to GitHub Container Registry
@@ -53,12 +54,12 @@ docker stop ets-events-test && docker rm ets-events-test
 echo YOUR_PAT | docker login ghcr.io -u yourusername --password-stdin
 
 # Tag with version number AND latest
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:1.1.0
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:2.0.0-alpha.1
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:latest
 
 # Push both tags
-docker push ghcr.io/dlarsen395/ets-events:1.1.0
-docker push ghcr.io/dlarsen395/ets-events:latest
+docker push ghcr.io/dlarsen395/seismistats:2.0.0-alpha.1
+docker push ghcr.io/dlarsen395/seismistats:latest
 ```
 
 ### 4. Deploy to Docker Swarm (Portainer)
@@ -71,16 +72,16 @@ docker push ghcr.io/dlarsen395/ets-events:latest
 
 2. **Create Stack**:
    - Stacks → Add stack
-   - Name: `ets-events`
+   - Name: `seismistats`
    - Paste this compose:
 
 ```yaml
 version: "3.8"
 
 services:
-  ets-events:
-    image: ghcr.io/dlarsen395/ets-events:1.1.0  # Pin to specific version
-    # image: ghcr.io/dlarsen395/ets-events:latest  # Or use latest
+  seismistats:
+    image: ghcr.io/dlarsen395/seismistats:2.0.0-alpha.1  # Pin to specific version
+    # image: ghcr.io/dlarsen395/seismistats:latest  # Or use latest
     networks:
       - npm-proxy
     deploy:
@@ -99,7 +100,7 @@ networks:
 
 1. **Create Access List** (one-time setup):
    - Go to **Access Lists** → **Add Access List**
-   - Name: `ETS Events Access`
+   - Name: `SeismiStats Access`
    - **Authorization** tab: Add username/password for each user
    - **Save**
 
@@ -107,14 +108,14 @@ networks:
    - **Details** tab:
      - Domain Names: `ets.home.hushrush.com`, `ets.hushrush.com`
      - Scheme: `http`
-     - Forward Hostname: `ets-events_ets-events`
+     - Forward Hostname: `seismistats_seismistats`
      - Forward Port: `80`
      - Block Common Exploits: ✅
    - **SSL** tab:
      - Select your wildcard certificate
      - Force SSL: ✅
      - HTTP/2 Support: ✅
-   - **Access List**: Select `ETS Events Access`
+   - **Access List**: Select `SeismiStats Access`
    - **Save**
 
 3. **Done!** Visit https://ets.home.hushrush.com
@@ -127,15 +128,15 @@ networks:
 # 1. Update version in package.json and CHANGELOG.md
 
 # 2. Build new image
-docker build -t ets-events:latest .
+docker build -t seismistats:latest .
 
 # 3. Tag with version AND latest (replace X.Y.Z with actual version)
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:X.Y.Z
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:X.Y.Z
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:latest
 
 # 4. Push both tags to GHCR
-docker push ghcr.io/dlarsen395/ets-events:X.Y.Z
-docker push ghcr.io/dlarsen395/ets-events:latest
+docker push ghcr.io/dlarsen395/seismistats:X.Y.Z
+docker push ghcr.io/dlarsen395/seismistats:latest
 
 # 5. Commit and tag in git
 git add -A
@@ -148,7 +149,7 @@ git push origin main --tags
 
 ### Quick Update via Portainer
 
-1. Go to **Stacks** → **ets-events**
+1. Go to **Stacks** → **seismistats**
 2. Click on the service
 3. Click **Update**
 4. Check **Pull latest image**
@@ -158,30 +159,30 @@ git push origin main --tags
 
 ### View Service Status
 ```bash
-docker service ps ets-events_ets-events
-docker service ls | grep ets
+docker service ps seismistats_seismistats
+docker service ls | grep seismistats
 ```
 
 ### View Logs
 ```bash
-docker service logs -f ets-events_ets-events
+docker service logs -f seismistats_seismistats
 ```
 
 ### Scale Service (optional)
 ```bash
-docker service scale ets-events_ets-events=2
+docker service scale seismistats_seismistats=2
 ```
 
 ### Remove Service
 ```bash
-docker stack rm ets-events
+docker stack rm seismistats
 ```
 
 ## User Management
 
 ### Add User
 1. Open NPM Dashboard
-2. Go to **Access Lists** → "ETS Events Access"
+2. Go to **Access Lists** → "SeismiStats Access"
 3. Click **Edit**
 4. **Authorization** tab → Add username/password
 5. **Save**
@@ -203,7 +204,7 @@ Internet
    ↓
 NPM (ports 80/443) - Handles SSL + Auth
    ↓
-ets-events_ets-events service (internal port 80)
+seismistats_seismistats service (internal port 80)
    ↓
 React SPA with MapLibre
 ```
@@ -219,27 +220,27 @@ React SPA with MapLibre
 ### Service won't start
 ```bash
 # Check service status
-docker service ps ets_ets-events --no-trunc
+docker service ps seismistats_seismistats --no-trunc
 
 # View detailed logs
-docker service logs ets_ets-events --tail 100
+docker service logs seismistats_seismistats --tail 100
 ```
 
 ### Can't access via NPM
-1. Verify service is running: `docker service ls | grep ets`
-2. Check service name in NPM matches: `ets_ets-events`
+1. Verify service is running: `docker service ls | grep seismistats`
+2. Check service name in NPM matches: `seismistats_seismistats`
 3. Ensure both NPM and app are on `npm-proxy` network
 4. Check NPM logs: `docker logs <npm-container-id>`
 
 ### Health check failing
 ```bash
 # Test from within the container
-docker exec $(docker ps -q -f name=ets_ets-events) wget -qO- http://localhost/health
+docker exec $(docker ps -q -f name=seismistats_seismistats) wget -qO- http://localhost/health
 ```
 
 ### Need to rebuild without cache
 ```bash
-docker build --no-cache -t ets-events:latest .
+docker build --no-cache -t seismistats:latest .
 ```
 
 ### Auth not working
@@ -277,5 +278,5 @@ docker build --no-cache -t ets-events:latest .
 For issues:
 1. Check service logs
 2. Verify NPM configuration
-3. Test health endpoint: `curl http://ets_ets-events/health`
+3. Test health endpoint: `curl http://seismistats_seismistats/health`
 4. Check browser console for frontend errors

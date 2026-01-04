@@ -1,16 +1,16 @@
-# ETS Events Visualization
+# SeismiStats - The Seismic Energy Explorer
 
-An interactive web application for visualizing Pacific Northwest ETS (Episodic Tremor and Slip) seismic events with real-time playback, live data integration, and mobile-responsive design.
+An interactive web application for visualizing and analyzing worldwide seismic events, featuring ETS (Episodic Tremor and Slip) playback, USGS earthquake data integration, and comprehensive charting capabilities.
 
-![ETS Events Map](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-![Version](https://img.shields.io/badge/Version-1.2.11-blue)
+![SeismiStats](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
+![Version](https://img.shields.io/badge/Version-2.0.0--alpha.1-blue)
 ![React](https://img.shields.io/badge/React-19-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
-**GitHub Repository**: https://github.com/DLarsen395/ets-events
-**Container Registry**: https://ghcr.io/dlarsen395/ets-events
+**GitHub Repository**: https://github.com/DLarsen395/seismistats  
+**Container Registry**: https://ghcr.io/dlarsen395/seismistats
 
 ## 🌟 Features
 
@@ -50,8 +50,8 @@ An interactive web application for visualizing Pacific Northwest ETS (Episodic T
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd hushrush-ets-events
+git clone https://github.com/DLarsen395/seismistats.git
+cd seismistats
 
 # Install dependencies
 npm install
@@ -70,16 +70,24 @@ The app will be available at `http://localhost:5173`
 - **Basemap**: Carto Dark Matter (free)
 - **Overlays**: USGS Tectonic Plate Boundaries
 - **State Management**: Zustand
-- **Data Source**: PNSN Tremor API (https://tremorapi.pnsn.org)
+- **Data Sources**: 
+  - PNSN Tremor API (https://tremorapi.pnsn.org) - ETS events
+  - USGS Earthquake API - Global earthquakes
 - **Styling**: Tailwind CSS with dark mode, glassmorphism effects
 
-## 📊 Data Source
+## 📊 Data Sources
 
-Events are fetched from the Pacific Northwest Seismic Network (PNSN) Tremor API:
+### ETS Events (Tremor)
 - **API**: https://tremorapi.pnsn.org/api/v3.0/events
 - **Coverage**: Cascadia Subduction Zone
 - **Update Frequency**: Real-time
 - **Data Format**: GeoJSON
+
+### Earthquakes (USGS)
+- **API**: https://earthquake.usgs.gov/fdsnws/event/1/query
+- **Coverage**: Worldwide
+- **Historical Data**: 1500 to present
+- **Update Frequency**: Real-time
 
 ## 🎮 Usage
 
@@ -104,25 +112,38 @@ Events are fetched from the Pacific Northwest Seismic Network (PNSN) Tremor API:
 ```
 src/
 ├── components/
+│   ├── Charts/                       # Earthquake visualization charts
+│   │   ├── EarthquakeChartsPage.tsx  # Main charts container
+│   │   ├── MagnitudeDistributionChart.tsx
+│   │   ├── EnergyReleaseChart.tsx
+│   │   └── RechartsBarChart.tsx
 │   ├── Controls/
-│   │   ├── DataRangeSelector.tsx    # Time range preset buttons
+│   │   ├── DataRangeSelector.tsx     # Time range preset buttons
 │   │   ├── EventStats.tsx            # Statistics panel
 │   │   ├── Legend.tsx                # Depth/magnitude legend
 │   │   ├── MobileInfoPanel.tsx       # Mobile collapsible panel
 │   │   ├── PlaybackControls.tsx      # Timeline and playback buttons
 │   │   └── SideControls.tsx          # Mode toggle and speed controls
-│   └── Map/
-│       └── MapContainer.tsx          # Mapbox map component
+│   ├── Map/
+│   │   └── MapContainer.tsx          # MapLibre map component
+│   └── Navigation/
+│       └── ViewNavigation.tsx        # Map/Charts view switcher
 ├── hooks/
+│   ├── useAutoRefresh.ts             # Auto-refresh data logic
 │   ├── useEventData.ts               # Data fetching from API
 │   ├── useIsMobile.ts                # Mobile/tablet detection
 │   └── usePlayback.ts                # Playback logic and filtering
 ├── services/
-│   └── tremor-api.ts                 # PNSN API integration
+│   ├── earthquake-cache.ts           # IndexedDB caching layer
+│   ├── tremor-api.ts                 # PNSN API integration
+│   └── usgs-earthquake-api.ts        # USGS API integration
 ├── stores/
-│   └── playbackStore.ts              # Zustand state management
+│   ├── cacheStore.ts                 # Cache state management
+│   ├── earthquakeStore.ts            # Earthquake data state
+│   └── playbackStore.ts              # Playback state management
 ├── types/
-│   └── event.ts                      # TypeScript interfaces
+│   ├── earthquake.ts                 # USGS earthquake types
+│   └── event.ts                      # ETS event types
 └── App.tsx                           # Main application
 ```
 
@@ -194,10 +215,10 @@ The Docker image is completely self-contained - no API keys or environment varia
 #### Quick Start (Local Testing)
 ```bash
 # Build the image
-docker build -t ets-events:latest .
+docker build -t seismistats:latest .
 
 # Run locally
-docker run -d -p 8080:80 --name ets-events-test ets-events:latest
+docker run -d -p 8080:80 --name seismistats-test seismistats:latest
 
 # Test at http://localhost:8080
 ```
@@ -208,12 +229,12 @@ docker run -d -p 8080:80 --name ets-events-test ets-events:latest
 echo $PAT | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 
 # Tag with version AND latest
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:1.2.6
-docker tag ets-events:latest ghcr.io/dlarsen395/ets-events:latest
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:2.0.0
+docker tag seismistats:latest ghcr.io/dlarsen395/seismistats:latest
 
 # Push both tags
-docker push ghcr.io/dlarsen395/ets-events:1.2.6
-docker push ghcr.io/dlarsen395/ets-events:latest
+docker push ghcr.io/dlarsen395/seismistats:2.0.0
+docker push ghcr.io/dlarsen395/seismistats:latest
 ```
 
 #### Deploy to Docker Swarm (Portainer)
@@ -229,8 +250,8 @@ docker push ghcr.io/dlarsen395/ets-events:latest
 version: "3.8"
 
 services:
-  ets-events:
-    image: ghcr.io/dlarsen395/ets-events:1.2.6  # Pin to specific version
+  seismistats:
+    image: ghcr.io/dlarsen395/seismistats:2.0.0  # Pin to specific version
     networks:
       - npm-proxy
     deploy:
@@ -244,7 +265,7 @@ networks:
 ```
 
 3. **Configure Nginx Proxy Manager**:
-   - Forward Hostname: `ets-events_ets-events`
+   - Forward Hostname: `seismistats_seismistats`
    - Forward Port: `80`
    - Attach Access List for authentication
 
@@ -252,43 +273,30 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 
 ## 🗺️ Roadmap
 
-### ✅ Completed (V1.2.6)
-- [x] **Vector plate boundaries** - Switched from raster tiles to GeoJSON vectors for crisp lines at all zoom levels
-- [x] **Paginated data fetch** - Fetches all 1175+ plate boundary features via pagination
-- [x] **Color-coded boundaries** - Convergent (red), Divergent (green), Transform (orange)
-- [x] **Zoom-responsive line width** - Lines scale appropriately with zoom level
-- [x] **Multiple basemap options** - Carto Voyager, Stadia OSM Bright, Stamen Terrain, Outdoors, Alidade Smooth/Dark
-- [x] **Data range fixes** - Fixed preset buttons, custom date validation, timezone handling
-- [x] **Responsive right panel** - Flexbox layout with accordion collapse on short screens
-
-### ✅ Completed (V1.1.0)
+### ✅ V1.x - Complete
 - [x] MapLibre GL JS (free, no API key)
 - [x] USGS Tectonic Plate Boundaries overlay
-- [x] Warm color scheme for better visibility
-
-### ✅ Completed (V1.0.0)
 - [x] Live PNSN API integration
 - [x] Temporal playback engine
 - [x] Custom time range selection
 - [x] Depth-based event coloring
-- [x] Legend and statistics panels
 - [x] Mobile responsive design
-- [x] Timeline scrubbing with range brackets
-- [x] Loading states and error handling
 - [x] Docker deployment with GHCR
-- [x] Nginx Proxy Manager integration
-- [x] SSL and authentication support
+- [x] USGS earthquake charts with IndexedDB caching
 
-### 🔜 Next (V1.3.0)
+### 🔄 V2.x - In Development
+- [ ] Server-side TimescaleDB + PostGIS database
+- [ ] Backend API (Fastify + TypeScript)
+- [ ] Full historical earthquake data (1500-present)
+- [ ] Single-source data fetching (server syncs USGS)
+- [ ] Multi-source support (EMSC planned)
+- [ ] Cross-source duplicate detection
+
+### 🔮 Future
 - [ ] User-selectable event color schemes
-- [ ] Keyboard shortcuts
-- [ ] Enhanced event details popup
-
-### 🔮 Future (V2.0.0)
 - [ ] Event clustering at low zoom levels
 - [ ] URL state persistence
 - [ ] Export/share functionality
-- [ ] Screenshot and CSV export
 
 ## 🐛 Troubleshooting
 
@@ -311,83 +319,13 @@ See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) for detailed instructions.
 
 ## 📄 License
 
-[Your License Here]
+MIT License
 
 ## 🙏 Acknowledgments
 
 - **PNSN** - Pacific Northwest Seismic Network for tremor data API
+- **USGS** - Earthquake Hazards Program for global earthquake data
 - **MapLibre** - Open-source map library (fork of Mapbox GL JS)
 - **Carto** - Free basemap tiles
-- **USGS** - Tectonic plate boundary data
 - **React Team** - React 19 framework
 - **Vite Team** - Lightning-fast build tool
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```

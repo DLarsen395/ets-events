@@ -9,7 +9,7 @@
 
 ## Summary
 
-This ADR documents the architectural decisions for V2 of the ETS Events application, transitioning from client-side data fetching to a server-side database architecture.
+This ADR documents the architectural decisions for V2 of the SeismiStats application, transitioning from client-side data fetching to a server-side database architecture.
 
 ---
 
