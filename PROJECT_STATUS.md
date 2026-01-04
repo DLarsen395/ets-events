@@ -1,11 +1,11 @@
 # ETS Events Visualization - Project Status
 
-**Last Updated**: January 3, 2026
-**Version**: 1.2.14
+**Last Updated**: January 4, 2026
+**Version**: 1.2.9 (Release)
 
-## 📊 Current Status: V1.2.14 Active Development ✅
+## 📊 Current Status: V1.2.9 Released ✅
 
-All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh.
+All core features implemented. Earthquake Charts view with enhanced visualizations, intelligent caching, and auto-refresh. This is a stable release version.
 
 ### ✅ All Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -17,15 +17,23 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 
 ---
 
-## Recent Changes (v1.2.14)
+## Release Notes (v1.2.9)
+
+### Features
+- **Three Chart Types** - Bar, Stacked Area, and Energy Release charts
+- **Intelligent Caching** - IndexedDB with 28-day historical/recent split
+- **Auto-Refresh** - Configurable intervals with smart top-off fetching
+- **Pinned Filter Panel** - Always visible controls while charts scroll
 
 ### Bug Fixes
-- **Avg Magnitude Line Gaps** - Fixed NaN causing broken line in Energy chart
-- **"Last Auto-Refresh: Never"** - Now shows time after initial data load
-- **Accessibility** - Added proper id/name/title to form elements
+- Timezone bugs in chart date labels
+- Charts 2 & 3 magnitude filtering
+- Blank screen crash from null avgMagnitude
+- Accessibility warnings on form elements
 
-### Removed
-- Debug console logging (temporary troubleshooting code)
+### Known Issues
+- Auto-refresh may interfere with very long fetch operations (Last 5 Years)
+- Very large date ranges may encounter USGS API rate limiting
 
 ---
 
@@ -122,11 +130,15 @@ All core features implemented. Earthquake Charts view with enhanced visualizatio
 No blocking issues
 
 ### Minor
-1. **API Timeouts** - Very large date ranges (2+ years) may timeout
-   - **Workaround**: Use smaller ranges or presets
+1. **Auto-Refresh During Long Fetches** - Auto-refresh should pause during manual fetches but may interfere with very long operations (Last 5 Years)
+   - **Workaround**: Disable auto-refresh before loading large date ranges
+   - **Priority**: Medium (can cause API errors)
+
+2. **API Rate Limiting** - Very large date ranges may encounter USGS rate limiting
+   - **Workaround**: Use smaller date ranges; wait and retry
    - **Priority**: Low (edge case)
 
-2. **Orientation Delay** - Mobile orientation changes have 100ms detection delay
+3. **Orientation Delay** - Mobile orientation changes have 100ms detection delay
    - **Workaround**: Already implemented (built into code)
    - **Priority**: Low (acceptable UX)
 
@@ -138,8 +150,6 @@ No blocking issues
 2. **Code Duplication** - Mobile detection logic repeated in multiple files
    - **Impact**: Low
    - **Effort**: Low (could extract to shared hook)
-
-3. **API Rate Limiting** - No explicit handling
    - **Impact**: Low (API seems unlimited)
    - **Effort**: Medium
 

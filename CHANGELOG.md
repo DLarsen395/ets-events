@@ -5,6 +5,55 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.9] - 2026-01-04
+
+### 🎉 Release Version - Earthquake Charts Feature Complete
+
+This release consolidates versions 1.2.10 through 1.2.18 into a stable release. The Earthquake Charts feature is fully functional with intelligent caching, auto-refresh, and comprehensive visualizations.
+
+### Features
+- **Three Chart Types**
+  - Earthquakes by Year/Month/Week/Day - Bar chart with event counts
+  - Magnitude Distribution Over Time - Stacked area chart with toggleable ranges
+  - Seismic Energy Released - Log-scale bars with average magnitude line
+  
+- **Intelligent Caching System**
+  - IndexedDB-based caching with 28-day historical/recent split
+  - Progressive fetch with visual progress indicator
+  - Cache status panel with clear/reset controls
+  - ~55MB storage for full historical data
+
+- **Auto-Refresh System**
+  - Configurable intervals (1, 5, 15, 30, 60 minutes)
+  - Smart top-off fetching (only new events since last known)
+  - Visual indicators during refresh
+  - Pauses during manual fetches
+
+- **Filter Panel (Pinned)**
+  - Time Range: Last 7 days to Last 5 years
+  - Min/Max Magnitude filters
+  - Region selector (Global, US, Pacific, etc.)
+  - Stays fixed while charts scroll
+
+### Bug Fixes (from development versions)
+- Fixed timezone bugs in chart X-axis date labels
+- Fixed charts 2 & 3 not filtering by magnitude
+- Fixed blank screen crash from null avgMagnitude
+- Fixed average magnitude line gaps
+- Fixed accessibility warnings on form elements
+- Client-side filtering optimization (no re-fetch on narrower filters)
+
+### Known Issues
+- **Auto-Refresh During Long Fetches** - Auto-refresh should pause during manual fetches but may interfere with very long operations (Last 5 Years). Users should disable auto-refresh when loading large date ranges.
+- **API Rate Limiting** - Very large date ranges may encounter USGS rate limiting; reduce time range if errors occur.
+
+### Technical Notes
+- Removed Chart.js dependency (Recharts only)
+- Bundle size: ~380KB
+- Supports 290,000+ earthquake events
+
+---
+
 ## [1.2.18] - 2026-01-03
 
 ### 🐛 Critical Fix - Charts 2 & 3 Missing Today's Date
