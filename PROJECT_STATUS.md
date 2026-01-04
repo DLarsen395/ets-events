@@ -203,6 +203,20 @@ No blocking issues
    - [ ] Validate API error handling
    - [ ] Review TypeScript strict mode compliance
 
+### V2.0 - Server-Side Architecture (MAJOR - Planned)
+See [docs/V2_SERVER_SIDE_ARCHITECTURE_PLAN.md](docs/V2_SERVER_SIDE_ARCHITECTURE_PLAN.md) for full details.
+
+**Goals:**
+- Move earthquake data to server-side TimescaleDB + PostGIS
+- Single server fetches USGS data once (prevents rate limiting)
+- API serves aggregated chart data to clients
+- Prepare for multi-source data (USGS, EMSC, etc.)
+- Implement cross-source duplicate detection
+
+**Estimated Effort:** 6-10 weeks
+
+**Status:** Planning phase - awaiting stakeholder decisions on scope
+
 ---
 
 ## Development Activity
@@ -293,4 +307,4 @@ For questions or issues:
 
 ---
 
-*This document is auto-generated and reflects the current state of the project as of November 27, 2025.*
+*This document is auto-generated and reflects the current state of the project as of January 4, 2026.*
