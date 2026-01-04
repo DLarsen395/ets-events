@@ -45,16 +45,16 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
 
     const db = getDb();
 
-    // Determine time bucket based on aggregation
-    const bucket = aggregation === 'yearly' ? '1 year'
-      : aggregation === 'monthly' ? '1 month'
-      : aggregation === 'weekly' ? '1 week'
-      : '1 day';
+    // Determine time truncation based on aggregation (using PostgreSQL date_trunc)
+    const truncUnit = aggregation === 'yearly' ? 'year'
+      : aggregation === 'monthly' ? 'month'
+      : aggregation === 'weekly' ? 'week'
+      : 'day';
 
     const results = await db
       .selectFrom('earthquakes')
       .select([
-        sql<string>`time_bucket(${sql.lit(bucket)}, time)`.as('bucket'),
+        sql<string>`date_trunc(${sql.lit(truncUnit)}, time)`.as('bucket'),
         sql<number>`COUNT(*)`.as('count'),
         sql<number>`AVG(magnitude)`.as('avgMagnitude'),
         sql<number>`MAX(magnitude)`.as('maxMagnitude'),
@@ -62,7 +62,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
       .where('time', '>=', new Date(startDate))
       .where('time', '<=', new Date(endDate))
       .where('magnitude', '>=', minMagnitude)
-      .groupBy(sql`time_bucket(${sql.lit(bucket)}, time)`)
+      .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
       .execute();
 
@@ -101,16 +101,16 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
 
     const db = getDb();
 
-    const bucket = aggregation === 'yearly' ? '1 year'
-      : aggregation === 'monthly' ? '1 month'
-      : aggregation === 'weekly' ? '1 week'
-      : '1 day';
+    const truncUnit = aggregation === 'yearly' ? 'year'
+      : aggregation === 'monthly' ? 'month'
+      : aggregation === 'weekly' ? 'week'
+      : 'day';
 
     // Get counts by magnitude range
     const results = await db
       .selectFrom('earthquakes')
       .select([
-        sql<string>`time_bucket(${sql.lit(bucket)}, time)`.as('bucket'),
+        sql<string>`date_trunc(${sql.lit(truncUnit)}, time)`.as('bucket'),
         sql<number>`COUNT(*) FILTER (WHERE magnitude >= -2 AND magnitude < 0)`.as('mag_neg2_0'),
         sql<number>`COUNT(*) FILTER (WHERE magnitude >= 0 AND magnitude < 1)`.as('mag_0_1'),
         sql<number>`COUNT(*) FILTER (WHERE magnitude >= 1 AND magnitude < 2)`.as('mag_1_2'),
@@ -122,7 +122,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
       ])
       .where('time', '>=', new Date(startDate))
       .where('time', '<=', new Date(endDate))
-      .groupBy(sql`time_bucket(${sql.lit(bucket)}, time)`)
+      .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
       .execute();
 
@@ -168,16 +168,16 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
 
     const db = getDb();
 
-    const bucket = aggregation === 'yearly' ? '1 year'
-      : aggregation === 'monthly' ? '1 month'
-      : aggregation === 'weekly' ? '1 week'
-      : '1 day';
+    const truncUnit = aggregation === 'yearly' ? 'year'
+      : aggregation === 'monthly' ? 'month'
+      : aggregation === 'weekly' ? 'week'
+      : 'day';
 
     // Energy formula: E = 10^(1.5*M + 4.8) joules
     const results = await db
       .selectFrom('earthquakes')
       .select([
-        sql<string>`time_bucket(${sql.lit(bucket)}, time)`.as('bucket'),
+        sql<string>`date_trunc(${sql.lit(truncUnit)}, time)`.as('bucket'),
         sql<number>`SUM(POWER(10, 1.5 * magnitude + 4.8))`.as('totalEnergy'),
         sql<number>`AVG(magnitude)`.as('avgMagnitude'),
         sql<number>`COUNT(*)`.as('count'),
@@ -185,7 +185,7 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
       .where('time', '>=', new Date(startDate))
       .where('time', '<=', new Date(endDate))
       .where('magnitude', '>=', minMagnitude)
-      .groupBy(sql`time_bucket(${sql.lit(bucket)}, time)`)
+      .groupBy(sql`date_trunc(${sql.lit(truncUnit)}, time)`)
       .orderBy('bucket', 'asc')
       .execute();
 

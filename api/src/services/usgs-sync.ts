@@ -94,7 +94,7 @@ export async function syncFromUSGS(options: SyncOptions): Promise<number> {
       throw new Error(`USGS API error: ${response.status} ${response.statusText}`);
     }
 
-    const data: USGSResponse = await response.json();
+    const data: USGSResponse = (await response.json()) as USGSResponse;
     console.log(`[USGS Sync] Received ${data.features.length} events from USGS`);
 
     // Process in batches

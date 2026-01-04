@@ -105,12 +105,11 @@ export async function earthquakeRoutes(app: FastifyInstance): Promise<void> {
       query = query.where('depth_km', '<=', maxDepth);
     }
 
-    // Bounding box filter (PostGIS)
+    // Bounding box filter (PostGIS) - use raw SQL for geospatial query
     if (bbox) {
       const [minLng, minLat, maxLng, maxLat] = bbox.split(',').map(Number);
-      query = query.where(
-        sql`ST_Within(location, ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326))`
-      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (query as any) = (query as any).where(sql`ST_Within(location, ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326))`);
     }
 
     // Order and paginate

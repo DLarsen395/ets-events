@@ -7,33 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - V2 Backend Development
 
-### 🚀 V2 API Server (In Progress)
+### 🚀 V2 API Server (Functional)
 
-Adding server-side backend with PostGIS for centralized earthquake data storage.
+Server-side backend with PostgreSQL + PostGIS for centralized earthquake data storage.
 
 ### Added
 - **API Server** (`/api`) - Fastify 5.x + TypeScript backend
-  - `/api/charts/*` - Pre-aggregated chart data endpoints
-  - `/api/earthquakes` - Filtered earthquake queries
-  - `/api/sync/*` - USGS sync status and manual trigger
-  - `/health` - Health check endpoints
+  - `/api/charts/daily-counts` - Aggregated earthquake counts (day/week/month/year)
+  - `/api/charts/magnitude-distribution` - Counts by magnitude range
+  - `/api/charts/energy-release` - Seismic energy calculations
+  - `/api/earthquakes` - Filtered earthquake queries with pagination
+  - `/health` - Health check endpoint
 - **Database** - PostgreSQL 16 + PostGIS schema
-  - PostGIS geospatial indexes
-  - Optimized for time-series queries
+  - Full earthquake table with geospatial support
+  - Kysely migrations for schema management
+  - PostGIS `ST_Within` for bounding box queries
 - **USGS Sync Service** - Background data synchronization
-  - Scheduled sync (every 5 minutes)
-  - Manual sync trigger endpoint
-  - Chunked batch processing
-- **Shared Types** (`/shared`) - TypeScript interfaces for API contract
+  - Runs every 5 minutes automatically
+  - Fetches last 7 days from USGS on startup
+  - Deduplication by source_event_id
 - **Docker Dev Stack** - Full `docker-compose.dev.yml` with:
-  - PostgreSQL + PostGIS database container
-  - API server with hot-reload (tsx watch)
-  - Frontend with Vite hot-reload
+  - PostgreSQL + PostGIS database container (port 5432)
+  - API server with hot-reload (port 3000)
+  - Frontend with Vite hot-reload (port 5173)
   - All services with health checks
 - **Vite CI Mode** - `cross-env CI=true` disables interactive prompts permanently
 
 ### Changed
 - Dev script now uses `cross-env CI=true vite --host` to prevent terminal blocking
+- Chart SQL uses PostgreSQL `date_trunc()` instead of TimescaleDB `time_bucket()`
+
+### Technical Details
+- **Kysely** for type-safe SQL queries
+- **TypeBox** for request validation
+- All TypeScript errors resolved
 
 ---
 
