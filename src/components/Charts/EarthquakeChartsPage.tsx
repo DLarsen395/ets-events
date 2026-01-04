@@ -49,6 +49,16 @@ export function EarthquakeChartsPage() {
   // Time grouping for top chart
   const [topChartGrouping, setTopChartGrouping] = useState<TimeGrouping>('day');
 
+  // Filter earthquakes by current magnitude range
+  // Store keeps full data for efficient client-side re-filtering,
+  // but charts need the filtered subset
+  const filteredEarthquakes = useMemo(() => {
+    return earthquakes.filter(eq => {
+      const m = eq.properties.mag ?? 0;
+      return m >= minMagnitude && m <= maxMagnitude;
+    });
+  }, [earthquakes, minMagnitude, maxMagnitude]);
+
   // Calculate days in range for smart chart defaults
   const daysInRange = useMemo(() => {
     if (timeRange === 'custom' && customStartDate && customEndDate) {
@@ -93,9 +103,9 @@ export function EarthquakeChartsPage() {
       // Fill in all days in the range, even those with no earthquakes
       return fillMissingDays(dailyAggregates, dateRange.startDate, dateRange.endDate);
     }
-    // Aggregate by the selected time period
-    return aggregateByTimePeriod(earthquakes, topChartGrouping);
-  }, [earthquakes, dailyAggregates, topChartGrouping, dateRange]);
+    // Aggregate by the selected time period (use filtered data)
+    return aggregateByTimePeriod(filteredEarthquakes, topChartGrouping);
+  }, [filteredEarthquakes, dailyAggregates, topChartGrouping, dateRange]);
 
   // Build chart title
   const getChartTitle = () => {
@@ -269,7 +279,7 @@ export function EarthquakeChartsPage() {
 
         {/* Magnitude Distribution Chart - always show */}
         <MagnitudeDistributionChart
-          earthquakes={earthquakes}
+          earthquakes={filteredEarthquakes}
           title="Magnitude Distribution Over Time"
           height={280}
           daysInRange={daysInRange}
@@ -278,7 +288,7 @@ export function EarthquakeChartsPage() {
 
         {/* Energy Release Chart - always show */}
         <EnergyReleaseChart
-          earthquakes={earthquakes}
+          earthquakes={filteredEarthquakes}
           title="Seismic Energy Released"
           height={280}
           daysInRange={daysInRange}

@@ -5,6 +5,25 @@ All notable changes to the ETS Events Visualization project will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.17] - 2026-01-03
+
+### 🐛 Critical Bug Fix - Charts 2 & 3 Data Flow
+
+### Fixed
+- **Charts 2 & 3 Not Filtering by Magnitude** - Root cause identified and fixed
+  - Problem: Charts 2 & 3 received raw `earthquakes` array from store (never filtered)
+  - Chart 1 worked because it used `dailyAggregates` which was filtered in store
+  - Solution: Added `filteredEarthquakes` memoized computation in EarthquakeChartsPage
+  - Charts 2 & 3 now receive properly filtered data matching the magnitude filter
+- **Charts 2 & 3 Date Filling** - Now receive same dateRange as Chart 1
+  - All charts now use consistent date range ending on current day
+  - fillMissingDays logic applies correctly to filtered data
+
+### Technical Details
+The store's client-side filtering optimization updated `dailyAggregates` but kept
+the full `earthquakes` array for re-filtering capability. Charts 2 & 3 were using
+the unfiltered array directly. Fix adds filtering at the presentation layer.
+
 ## [1.2.16] - 2026-01-03
 
 ### 🐛 Bug Fixes

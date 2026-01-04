@@ -433,14 +433,14 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
 
   // Filter setters - use client-side filtering when possible to avoid refetch
   setMinMagnitude: (mag) => {
-    const { maxMagnitude, loadedMinMagnitude, loadedMaxMagnitude, loadedTimeRange, loadedRegionScope, 
+    const { maxMagnitude, loadedMinMagnitude, loadedMaxMagnitude, loadedTimeRange, loadedRegionScope,
             earthquakes, timeRange, regionScope } = get();
-    
+
     // Ensure min doesn't exceed max
     const newMin = mag;
     const newMax = mag > maxMagnitude ? mag : maxMagnitude;
     set({ minMagnitude: newMin, maxMagnitude: newMax });
-    
+
     // Check if we can filter client-side:
     // - Same time range and region
     // - New magnitude range is a SUBSET of loaded data
@@ -463,14 +463,14 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
   },
 
   setMaxMagnitude: (mag) => {
-    const { minMagnitude, loadedMinMagnitude, loadedMaxMagnitude, loadedTimeRange, loadedRegionScope, 
+    const { minMagnitude, loadedMinMagnitude, loadedMaxMagnitude, loadedTimeRange, loadedRegionScope,
             earthquakes, timeRange, regionScope } = get();
-    
+
     // Ensure max doesn't go below min
     const newMax = mag;
     const newMin = mag < minMagnitude ? mag : minMagnitude;
     set({ maxMagnitude: newMax, minMagnitude: newMin });
-    
+
     // Check if we can filter client-side
     if (loadedMinMagnitude !== null && loadedMaxMagnitude !== null &&
         loadedTimeRange === timeRange && loadedRegionScope === regionScope &&
