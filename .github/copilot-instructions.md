@@ -92,6 +92,60 @@ interface ETSEvent {
 
 This ensures changes are preserved and documented before testing.
 
+## Git & GitHub Workflow - CRITICAL
+**Use `gh` CLI instead of MCP tools for GitHub operations when possible.**
+
+### Before Starting New Work
+```bash
+git status                    # Check for uncommitted changes
+git pull origin main          # Sync with remote
+```
+
+### After Completing Work
+```bash
+git add -A                    # Stage all changes
+git commit -m "type: description"  # Commit with conventional message
+git push origin main          # Push to GitHub (NOT gh repo sync)
+```
+
+### Commit Message Conventions
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation only
+- `refactor:` - Code change that neither fixes a bug nor adds a feature
+- `style:` - Formatting, whitespace
+- `test:` - Adding tests
+- `chore:` - Maintenance, deps, config
+
+### Version Tagging
+```bash
+git tag -a v2.0.0 -m "V2.0.0 - Server-side architecture"
+git push origin v2.0.0
+```
+
+### ⚠️ AVOID
+- **Never use `gh repo sync --force`** - It can reset local commits
+- **Never force push to main** unless recovering from disaster
+- **Always commit before switching tasks**
+
+## Environment Safety
+
+### Local Development
+- Use Docker Desktop for local container testing
+- Frontend: `npm run dev` (Vite dev server)
+- API: `npm run dev` in `/api` directory
+- Database: Local Docker container or Docker Desktop
+
+### Docker Image Building
+- Build locally with `docker build`
+- Test locally before pushing to GHCR
+- Tag with version: `docker tag ... ghcr.io/dlarsen395/ets-events-api:v2.0.0`
+
+### Production Deployment
+- Only deploy tagged versions to Docker Swarm
+- Use Portainer for stack management
+- NPM handles SSL termination
+
 ---
 
 ## V2.x Backend Standards (When Implementing)
