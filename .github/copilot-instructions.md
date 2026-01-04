@@ -95,17 +95,59 @@ This ensures changes are preserved and documented before testing.
 ## Git & GitHub Workflow - CRITICAL
 **Use `gh` CLI instead of MCP tools for GitHub operations when possible.**
 
+### Branch Strategy
+Use feature branches for all new work. Never commit directly to `main`.
+
+#### Branch Naming Convention
+```
+<type>/<short-description>
+
+Examples:
+  feature/v2-api-skeleton
+  feature/v2-usgs-sync
+  fix/chart-timezone-bug
+  docs/update-readme
+  refactor/extract-hooks
+```
+
+#### Creating a Feature Branch
+```bash
+git checkout main              # Start from main
+git pull origin main           # Ensure up to date
+git checkout -b feature/v2-api-skeleton  # Create and switch to branch
+```
+
+#### Working on a Branch
+```bash
+git add -A
+git commit -m "feat: add Fastify server skeleton"
+git push origin feature/v2-api-skeleton  # Push branch to remote
+```
+
+#### Merging to Main (when feature is complete)
+```bash
+git checkout main
+git pull origin main           # Get latest
+git merge feature/v2-api-skeleton  # Merge feature branch
+git push origin main           # Push merged main
+git branch -d feature/v2-api-skeleton  # Delete local branch
+git push origin --delete feature/v2-api-skeleton  # Delete remote branch
+```
+
+#### Alternative: Pull Request Workflow
+```bash
+# After pushing branch, create PR via gh CLI:
+gh pr create --title "feat: V2 API skeleton" --body "Phase 1 implementation"
+# After review/approval:
+gh pr merge --merge --delete-branch
+```
+
 ### Before Starting New Work
 ```bash
 git status                    # Check for uncommitted changes
+git checkout main             # Switch to main
 git pull origin main          # Sync with remote
-```
-
-### After Completing Work
-```bash
-git add -A                    # Stage all changes
-git commit -m "type: description"  # Commit with conventional message
-git push origin main          # Push to GitHub (NOT gh repo sync)
+git checkout -b feature/...   # Create new feature branch
 ```
 
 ### Commit Message Conventions
