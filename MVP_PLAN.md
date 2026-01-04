@@ -1,11 +1,11 @@
-# ETS Events Visualization - MVP Status
+# SeismiStats - MVP Status
 
 ## 🎉 V1.0.0 RELEASED!
 
 All MVP features have been successfully implemented, tested, and deployed to production.
 
-**Production URL**: https://ets.home.hushrush.com  
-**Container Image**: `ghcr.io/dlarsen395/ets-events:latest`
+**Production URL**: https://seismistats.home.hushrush.com
+**Container Image**: `ghcr.io/dlarsen395/seismistats:latest`
 
 ## Feature Status
 

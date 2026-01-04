@@ -4,8 +4,8 @@
 
 This application is deployed using Docker Swarm with Nginx Proxy Manager for SSL termination and authentication. The container image is hosted on GitHub Container Registry (GHCR).
 
-**Production URL**: https://ets.home.hushrush.com  
-**GitHub Repository**: https://github.com/DLarsen395/seismistats  
+**Production URL**: https://seismistats.home.hushrush.com
+**GitHub Repository**: https://github.com/DLarsen395/seismistats
 **Container Registry**: `ghcr.io/dlarsen395/seismistats`
 
 ### Available Image Tags
@@ -106,7 +106,7 @@ networks:
 
 2. **Add Proxy Host**:
    - **Details** tab:
-     - Domain Names: `ets.home.hushrush.com`, `ets.hushrush.com`
+     - Domain Names: `seismistats.home.hushrush.com`, `seismistats.hushrush.com`
      - Scheme: `http`
      - Forward Hostname: `seismistats_seismistats`
      - Forward Port: `80`
@@ -118,7 +118,7 @@ networks:
    - **Access List**: Select `SeismiStats Access`
    - **Save**
 
-3. **Done!** Visit https://ets.home.hushrush.com
+3. **Done!** Visit https://seismistats.home.hushrush.com
 
 ## Updating the Application
 

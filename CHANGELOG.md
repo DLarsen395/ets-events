@@ -20,7 +20,7 @@ This release rebrands the project from "ETS Events" to "SeismiStats" to better r
 
 ### Notes
 - ETS (Episodic Tremor and Slip) references in scientific contexts remain unchanged
-- Production URL `ets.home.hushrush.com` will be migrated to `seismistats.home.hushrush.com` in future release
+- Production URL migrated from `ets.home.hushrush.com` to `seismistats.home.hushrush.com`
 
 ---
 

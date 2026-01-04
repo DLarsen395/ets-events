@@ -3,9 +3,9 @@
 ## Overview
 A React + TypeScript + Vite application for visualizing Pacific Northwest ETS (Episodic Tremor and Slip) seismic events with temporal playback capabilities.
 
-**Version**: 1.0.0  
-**Status**: ✅ Complete and Deployed  
-**Production URL**: https://ets.home.hushrush.com
+**Version**: 1.0.0
+**Status**: ✅ Complete and Deployed
+**Production URL**: https://seismistats.home.hushrush.com
 
 ## Tech Stack
 - **Frontend**: React 19 + TypeScript + Vite

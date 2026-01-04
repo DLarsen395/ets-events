@@ -275,7 +275,7 @@ See [docs/V2_SERVER_SIDE_ARCHITECTURE_PLAN.md](docs/V2_SERVER_SIDE_ARCHITECTURE_
 
 ### Production (Docker Swarm)
 - **Status**: ✅ Deployed
-- **URL**: https://ets.home.hushrush.com
+- **URL**: https://seismistats.home.hushrush.com
 - **Image**: `ghcr.io/dlarsen395/seismistats:latest`
 - **Stack**: `seismistats`
 - **Auth**: Nginx Proxy Manager Access List
