@@ -9,7 +9,7 @@ An interactive web application for visualizing and analyzing worldwide seismic e
 ![Vite](https://img.shields.io/badge/Vite-7.2-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
 
-**GitHub Repository**: https://github.com/DLarsen395/seismistats  
+**GitHub Repository**: https://github.com/DLarsen395/seismistats
 **Container Registry**: https://ghcr.io/dlarsen395/seismistats
 
 ## 🌟 Features
@@ -70,7 +70,7 @@ The app will be available at `http://localhost:5173`
 - **Basemap**: Carto Dark Matter (free)
 - **Overlays**: USGS Tectonic Plate Boundaries
 - **State Management**: Zustand
-- **Data Sources**: 
+- **Data Sources**:
   - PNSN Tremor API (https://tremorapi.pnsn.org) - ETS events
   - USGS Earthquake API - Global earthquakes
 - **Styling**: Tailwind CSS with dark mode, glassmorphism effects
