@@ -72,6 +72,9 @@ function apiDailyCountsToAggregates(data: ApiDailyCount[]): DailyEarthquakeAggre
 
 /**
  * Convert API magnitude distribution to chart format
+ * 
+ * API returns ranges like "M2 to M3", "M6+"
+ * Chart expects keys like "mag_2_3", "mag_6_7"
  */
 function apiMagDistToChartData(data: ApiMagnitudeDistribution[], grouping: TimeGrouping): MagnitudeTimeDataPoint[] {
   return data.map(d => {
@@ -102,15 +105,18 @@ function apiMagDistToChartData(data: ApiMagnitudeDistribution[], grouping: TimeG
     };
 
     // Map API response ranges to our keys
-    point['mag_n2_n1'] = d.ranges['M-2 to M0'] || 0;
+    // API uses "M-2 to M0" which spans our mag_n2_n1 AND mag_n1_0
+    // For now, put it all in mag_n1_0 since negative magnitudes are rare
+    point['mag_n1_0'] = d.ranges['M-2 to M0'] || 0;
     point['mag_0_1'] = d.ranges['M0 to M1'] || 0;
     point['mag_1_2'] = d.ranges['M1 to M2'] || 0;
     point['mag_2_3'] = d.ranges['M2 to M3'] || 0;
     point['mag_3_4'] = d.ranges['M3 to M4'] || 0;
     point['mag_4_5'] = d.ranges['M4 to M5'] || 0;
     point['mag_5_6'] = d.ranges['M5 to M6'] || 0;
+    // API groups M6+ together, split it into our finer ranges
+    // For now put all in mag_6_7 since M7+ is very rare
     point['mag_6_7'] = d.ranges['M6+'] || 0;
-    // Note: API groups M6+ together, we might want to update API to split further
 
     return point;
   });
