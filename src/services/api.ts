@@ -1,6 +1,6 @@
                                                                                                                                                                         /**
  * SeismiStats API Client
- * 
+ *
  * Provides typed functions to call the V2 backend API endpoints.
  * Can be used alongside or instead of direct USGS API calls.
  */
@@ -166,7 +166,7 @@ export interface ChartQueryParams {
  */
 async function apiFetch<T>(endpoint: string, params?: Record<string, string | number | undefined>): Promise<T> {
   const url = new URL(endpoint, API_BASE_URL);
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -176,7 +176,7 @@ async function apiFetch<T>(endpoint: string, params?: Record<string, string | nu
   }
 
   const response = await fetch(url.toString());
-  
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || `API error: ${response.status}`);
@@ -247,7 +247,7 @@ export async function fetchSummaryStats(
  */
 export function apiEarthquakeToFeature(eq: ApiEarthquake): import('./usgs-earthquake-api').EarthquakeFeature {
   const [lng, lat] = eq.coordinates;
-  
+
   return {
     type: 'Feature',
     id: eq.id,

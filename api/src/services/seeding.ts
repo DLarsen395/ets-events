@@ -67,7 +67,7 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Seed the database with historical earthquake data
- * 
+ *
  * This function:
  * 1. Breaks the date range into chunks (default 30 days)
  * 2. Fetches each chunk sequentially with delays to avoid rate limiting
@@ -90,18 +90,18 @@ export async function seedDatabase(options: SeedingOptions = {}): Promise<Seedin
   // Calculate chunks (working backwards from endDate to startDate)
   const chunks: Array<{ start: Date; end: Date }> = [];
   let chunkEnd = new Date(endDate);
-  
+
   while (chunkEnd > startDate) {
     const chunkStart = new Date(chunkEnd);
     chunkStart.setDate(chunkStart.getDate() - chunkDays);
-    
+
     // Don't go before startDate
     if (chunkStart < startDate) {
       chunkStart.setTime(startDate.getTime());
     }
-    
+
     chunks.push({ start: chunkStart, end: chunkEnd });
-    
+
     // Move to previous chunk
     chunkEnd = new Date(chunkStart);
   }
@@ -125,7 +125,7 @@ export async function seedDatabase(options: SeedingOptions = {}): Promise<Seedin
   try {
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      
+
       seedingProgress.currentChunk = {
         startDate: chunk.start.toISOString(),
         endDate: chunk.end.toISOString(),
@@ -207,15 +207,15 @@ export async function getDatabaseCoverage(): Promise<{
   // Handle date conversion properly
   let oldestEvent: Date | null = null;
   let newestEvent: Date | null = null;
-  
+
   if (stats?.oldestEvent) {
-    oldestEvent = stats.oldestEvent instanceof Date 
-      ? stats.oldestEvent 
+    oldestEvent = stats.oldestEvent instanceof Date
+      ? stats.oldestEvent
       : new Date(stats.oldestEvent as unknown as string);
   }
   if (stats?.newestEvent) {
-    newestEvent = stats.newestEvent instanceof Date 
-      ? stats.newestEvent 
+    newestEvent = stats.newestEvent instanceof Date
+      ? stats.newestEvent
       : new Date(stats.newestEvent as unknown as string);
   }
 
