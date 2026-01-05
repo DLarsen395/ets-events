@@ -27,6 +27,9 @@ import {
 } from '../services/earthquake-cache';
 import { useCacheStore } from './cacheStore';
 
+// Check if V2 API mode is enabled
+const USE_API = import.meta.env.VITE_USE_API === 'true';
+
 interface EarthquakeSummary {
   total: number;
   avgMagnitude: number;
@@ -515,6 +518,12 @@ export const useEarthquakeStore = create<EarthquakeStore>((set, get) => ({
 
   // Fetch earthquake data based on current filters
   fetchEarthquakes: async () => {
+    // In V2 API mode, skip client-side fetching - data comes from server
+    if (USE_API) {
+      console.log('[earthquakeStore] V2 API mode - skipping client-side fetch');
+      return;
+    }
+
     const { minMagnitude, maxMagnitude, timeRange, regionScope, customStartDate, customEndDate, isLoading } = get();
     const cacheStore = useCacheStore.getState();
 
