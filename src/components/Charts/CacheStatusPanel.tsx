@@ -1,14 +1,18 @@
 /**
  * Cache Status Panel
  * Shows cache statistics and management controls
+ * Only shown in V1 mode (client-side caching)
  */
 
 import { useEffect } from 'react';
 import { useCacheStore, AUTO_REFRESH_INTERVALS } from '../../stores/cacheStore';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
+import { useIsApiMode } from './useChartData';
 import { format } from 'date-fns';
 
 export function CacheStatusPanel() {
+  const isApiMode = useIsApiMode();
+  
   const {
     isEnabled,
     stats,
@@ -30,9 +34,47 @@ export function CacheStatusPanel() {
 
   // Refresh info and stats on mount
   useEffect(() => {
-    refreshInfo();
-    refreshStats();
-  }, [refreshInfo, refreshStats]);
+    if (!isApiMode) {
+      refreshInfo();
+      refreshStats();
+    }
+  }, [refreshInfo, refreshStats, isApiMode]);
+
+  // In V2 mode, show server database status instead
+  if (isApiMode) {
+    return (
+      <div
+        style={{
+          padding: '1rem',
+          backgroundColor: 'rgba(31, 41, 55, 0.8)',
+          borderRadius: '0.5rem',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(75, 85, 99, 0.3)',
+        }}
+      >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          marginBottom: '0.75rem',
+        }}>
+          <span style={{ fontSize: '1rem' }}>🗄️</span>
+          <h3 style={{
+            color: '#d1d5db',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            margin: 0,
+          }}>
+            Server Database
+          </h3>
+        </div>
+        <p style={{ color: '#6b7280', fontSize: '0.75rem', lineHeight: 1.5, margin: 0 }}>
+          Data is served from the SeismiStats API server.
+          Database status panel coming soon.
+        </p>
+      </div>
+    );
+  }
 
   const isProcessing = progress.operation !== 'idle';
 

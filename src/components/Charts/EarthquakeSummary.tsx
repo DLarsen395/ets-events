@@ -3,10 +3,12 @@
  */
 
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
+import { useIsApiMode } from './useChartData';
 import { format } from 'date-fns';
 
 export function EarthquakeSummary() {
   const { summary, earthquakes, isLoading } = useEarthquakeStore();
+  const isApiMode = useIsApiMode();
 
   if (isLoading) {
     return (
@@ -22,6 +24,38 @@ export function EarthquakeSummary() {
         <div style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
           Loading statistics...
         </div>
+      </div>
+    );
+  }
+
+  // In V2 mode, the store isn't populated - show a different message
+  if (isApiMode) {
+    return (
+      <div
+        style={{
+          padding: '1rem',
+          backgroundColor: 'rgba(31, 41, 55, 0.8)',
+          borderRadius: '0.5rem',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(75, 85, 99, 0.3)',
+        }}
+      >
+        <h3
+          style={{
+            color: '#d1d5db',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            marginBottom: '0.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Summary Statistics
+        </h3>
+        <p style={{ color: '#6b7280', fontSize: '0.75rem', lineHeight: 1.5 }}>
+          Summary statistics will be available in a future update.
+          Charts are powered by the V2 API.
+        </p>
       </div>
     );
   }
