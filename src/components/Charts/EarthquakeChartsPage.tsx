@@ -395,6 +395,30 @@ export function EarthquakeChartsPage() {
               US data includes: Continental US, Alaska, Hawaii, Puerto Rico/USVI, and Guam.
             </p>
           )}
+
+          {/* Data Mode Indicator */}
+          <div
+            style={{
+              marginTop: '0.75rem',
+              paddingTop: '0.75rem',
+              borderTop: '1px solid rgba(75, 85, 99, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <span
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: isApiMode ? '#22c55e' : '#f59e0b',
+              }}
+            />
+            <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+              {isApiMode ? 'V2 Mode (Server API)' : 'V1 Mode (Client-side)'}
+            </span>
+          </div>
         </div>
       </div>
 
