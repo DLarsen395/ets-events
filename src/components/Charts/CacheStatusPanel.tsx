@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 
 export function CacheStatusPanel() {
   const isApiMode = useIsApiMode();
-  
+
   const {
     isEnabled,
     stats,

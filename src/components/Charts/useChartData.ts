@@ -1,6 +1,6 @@
 /**
  * Custom hook for fetching chart data
- * 
+ *
  * Uses the V2 API when VITE_USE_API=true, otherwise uses local store data.
  * This provides a seamless transition between V1 and V2 architectures.
  */
@@ -72,7 +72,7 @@ function apiDailyCountsToAggregates(data: ApiDailyCount[]): DailyEarthquakeAggre
 
 /**
  * Convert API magnitude distribution to chart format
- * 
+ *
  * API returns ranges like "M2 to M3", "M6+"
  * Chart expects keys like "mag_2_3", "mag_6_7"
  */
@@ -80,7 +80,7 @@ function apiMagDistToChartData(data: ApiMagnitudeDistribution[], grouping: TimeG
   return data.map(d => {
     const date = new Date(d.date);
     let period: string;
-    
+
     switch (grouping) {
       case 'day':
         period = format(date, 'MMM d, yyyy');
@@ -129,7 +129,7 @@ function apiEnergyToChartData(data: ApiEnergyRelease[], grouping: TimeGrouping):
   return data.map(d => {
     const date = new Date(d.date);
     let period: string;
-    
+
     switch (grouping) {
       case 'day':
         period = format(date, 'MMM d, yyyy');
@@ -162,6 +162,10 @@ function apiEnergyToChartData(data: ApiEnergyRelease[], grouping: TimeGrouping):
 export function useChartData(options: UseChartDataOptions): ChartData {
   const { startDate, endDate, minMagnitude, maxMagnitude, timeGrouping } = options;
 
+  // Convert dates to strings for stable dependency comparison
+  const startDateStr = format(startDate, 'yyyy-MM-dd');
+  const endDateStr = format(endDate, 'yyyy-MM-dd');
+
   // Local state for API data
   const [apiDailyCounts, setApiDailyCounts] = useState<DailyEarthquakeAggregate[]>([]);
   const [apiMagDist, setApiMagDist] = useState<MagnitudeTimeDataPoint[]>([]);
@@ -193,8 +197,8 @@ export function useChartData(options: UseChartDataOptions): ChartData {
     setApiError(null);
 
     const params: ChartQueryParams = {
-      startDate: format(startDate, 'yyyy-MM-dd'),
-      endDate: format(endDate, 'yyyy-MM-dd'),
+      startDate: startDateStr,
+      endDate: endDateStr,
       minMagnitude,
       maxMagnitude: maxMagnitude < 10 ? maxMagnitude : undefined,
       aggregation: timeGroupingToAggregation(timeGrouping),
@@ -225,7 +229,7 @@ export function useChartData(options: UseChartDataOptions): ChartData {
     } finally {
       setIsLoadingApi(false);
     }
-  }, [startDate, endDate, minMagnitude, maxMagnitude, timeGrouping]);
+  }, [startDateStr, endDateStr, minMagnitude, maxMagnitude, timeGrouping]);
 
   // Fetch from API when parameters change
   useEffect(() => {

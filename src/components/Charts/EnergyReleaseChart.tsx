@@ -354,28 +354,30 @@ export function EnergyReleaseChart({
           </p>
         </div>
 
-        {/* Time grouping buttons */}
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          {TIME_GROUPING_OPTIONS.map(option => (
-            <button
-              key={option.value}
-              onClick={() => setGrouping(option.value)}
-              style={{
-                padding: '0.2rem 0.4rem',
-                fontSize: '0.7rem',
-                color: grouping === option.value ? '#111827' : '#9ca3af',
-                backgroundColor: grouping === option.value ? '#60a5fa' : 'transparent',
-                border: '1px solid',
-                borderColor: grouping === option.value ? '#60a5fa' : '#374151',
-                borderRadius: '0.25rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        {/* Time grouping buttons - only show in V1 mode (no external control) */}
+        {!externalGrouping && (
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            {TIME_GROUPING_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                onClick={() => setGrouping(option.value)}
+                style={{
+                  padding: '0.2rem 0.4rem',
+                  fontSize: '0.7rem',
+                  color: grouping === option.value ? '#111827' : '#9ca3af',
+                  backgroundColor: grouping === option.value ? '#60a5fa' : 'transparent',
+                  border: '1px solid',
+                  borderColor: grouping === option.value ? '#60a5fa' : '#374151',
+                  borderRadius: '0.25rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chart */}

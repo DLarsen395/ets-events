@@ -468,33 +468,35 @@ export function MagnitudeDistributionChart({
           </p>
         </div>
 
-        {/* Time grouping selector */}
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          {TIME_GROUPING_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setTimeGrouping(option.value)}
-              style={{
-                padding: '0.2rem 0.5rem',
-                fontSize: '0.7rem',
-                backgroundColor: timeGrouping === option.value
-                  ? '#3b82f6'
-                  : 'transparent',
-                border: `1px solid ${timeGrouping === option.value
-                  ? '#3b82f6'
-                  : colors.grid}`,
-                borderRadius: '0.25rem',
-                color: timeGrouping === option.value
-                  ? '#ffffff'
-                  : colors.textMuted,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        {/* Time grouping selector - only show in V1 mode (no external control) */}
+        {!externalGrouping && (
+          <div style={{ display: 'flex', gap: '0.25rem' }}>
+            {TIME_GROUPING_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setTimeGrouping(option.value)}
+                style={{
+                  padding: '0.2rem 0.5rem',
+                  fontSize: '0.7rem',
+                  backgroundColor: timeGrouping === option.value
+                    ? '#3b82f6'
+                    : 'transparent',
+                  border: `1px solid ${timeGrouping === option.value
+                    ? '#3b82f6'
+                    : colors.grid}`,
+                  borderRadius: '0.25rem',
+                  color: timeGrouping === option.value
+                    ? '#ffffff'
+                    : colors.textMuted,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Range filter */}

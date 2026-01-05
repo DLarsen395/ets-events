@@ -47,8 +47,9 @@ export function EarthquakeChartsPage() {
   // Check if using V2 API mode
   const isApiMode = useIsApiMode();
 
-  // Auto-refresh hook - active when on this page
-  const { isRefreshing, newEventsFound } = useAutoRefresh(true);
+  // Auto-refresh hook - active when on this page AND in V1 mode only
+  // V2 API mode handles data freshness server-side
+  const { isRefreshing, newEventsFound } = useAutoRefresh(!isApiMode);
 
   // Time grouping for all charts (shared in API mode for efficiency)
   const [chartGrouping, setChartGrouping] = useState<TimeGrouping>('day');
@@ -72,9 +73,8 @@ export function EarthquakeChartsPage() {
   }, [timeRange, customStartDate, customEndDate]);
 
   // Calculate the actual date range for filling in missing days
-  // IMPORTANT: endDate must always be TODAY (current local date)
-  // Not memoized to ensure it always uses the current date
-  const dateRange = (() => {
+  // Memoized to prevent unnecessary re-fetches
+  const dateRange = useMemo(() => {
     const endDate = new Date();
     endDate.setHours(23, 59, 59, 999); // End of today
 
@@ -85,7 +85,7 @@ export function EarthquakeChartsPage() {
     const startDate = subDays(new Date(), daysInRange);
     startDate.setHours(0, 0, 0, 0); // Start of that day
     return { startDate, endDate };
-  })();
+  }, [timeRange, customStartDate, customEndDate, daysInRange]);
 
   // Use chart data hook (fetches from API in V2 mode, computes locally in V1 mode)
   const chartData = useChartData({
@@ -176,6 +176,8 @@ export function EarthquakeChartsPage() {
           <ChartFilters
             isAutoRefreshing={isRefreshing}
             newEventsFound={newEventsFound}
+            chartGrouping={chartGrouping}
+            onChartGroupingChange={setChartGrouping}
           />
         </div>
 
@@ -221,31 +223,32 @@ export function EarthquakeChartsPage() {
                 {getChartTitle()}
               </h2>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {/* Time grouping buttons */}
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                  {TIME_GROUPING_OPTIONS.map(option => (
-                    <button
-                      key={option.value}
-                      onClick={() => setChartGrouping(option.value)}
-                      style={{
-                        padding: '0.25rem 0.5rem',
-                        fontSize: '0.75rem',
-                        color: chartGrouping === option.value ? '#111827' : '#9ca3af',
-                        backgroundColor: chartGrouping === option.value ? '#60a5fa' : 'transparent',
-                        border: '1px solid',
-                        borderColor: chartGrouping === option.value ? '#60a5fa' : '#374151',
-                        borderRadius: '0.375rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+              {/* Time grouping buttons - only in V1 mode (V2 mode uses filter panel) */}
+              {!isApiMode && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    {TIME_GROUPING_OPTIONS.map(option => (
+                      <button
+                        key={option.value}
+                        onClick={() => setChartGrouping(option.value)}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          fontSize: '0.75rem',
+                          color: chartGrouping === option.value ? '#111827' : '#9ca3af',
+                          backgroundColor: chartGrouping === option.value ? '#60a5fa' : 'transparent',
+                          border: '1px solid',
+                          borderColor: chartGrouping === option.value ? '#60a5fa' : '#374151',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-
-              </div>
+              )}
             </div>
 
             {/* Error state */}

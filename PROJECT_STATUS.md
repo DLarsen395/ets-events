@@ -3,9 +3,9 @@
 **Last Updated**: January 4, 2026
 **Version**: 2.0.0-alpha.2
 
-## 📊 Current Status: V2.0.0-alpha.2 - Frontend Integration In Progress
+## 📊 Current Status: V2.0.0-alpha.2 - Chart Integration Complete
 
-V2 backend complete. Frontend chart components now support both V1 (client-side) and V2 (API-backed) modes via environment toggle.
+V2 backend complete. Frontend charts fully integrated with V2 API mode. All core functionality working.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -21,7 +21,7 @@ V2 backend complete. Frontend chart components now support both V1 (client-side)
 - Phase 3: Docker Dev Stack ✅ (Full hot-reload environment)
 - Phase 4: USGS Sync Service ✅ (Scheduled + manual)
 - Phase 5: Chart Endpoints ✅ (Daily counts, magnitude distribution, energy release)
-- Phase 6: Frontend Integration 🔄 (Charts support V2 mode, testing needed)
+- Phase 6: Frontend Integration ✅ (Charts fully support V2 mode)
 
 ---
 
@@ -48,6 +48,11 @@ docker compose -f docker-compose.dev.yml down
 | Frontend | http://localhost:5173 | seismistats-frontend |
 | API | http://localhost:3000 | seismistats-api |
 | Database | localhost:5432 | seismistats-db |
+
+### V2 Mode Indicators
+- **Green dot** in "About This Data" section shows "V2 Mode (Server API)"
+- **"Server Database"** panel replaces cache status in V2 mode
+- **"Group By"** dropdown in filter panel (V2 only - single control for all charts)
 
 ---
 

@@ -22,11 +22,23 @@ Chart components now support both V1 (client-side aggregation) and V2 (server-si
   - Single shared `chartGrouping` state for all charts (efficiency)
   - Auto-detects V2 mode via `useIsApiMode()` hook
   - Passes aggregated data to charts when API mode enabled
+- **V2 Mode Indicator** - Green dot in "About This Data" panel shows "V2 Mode (Server API)"
+- **Server Database Panel** - Shows "Data is served from the SeismiStats API server" in V2 mode
+- **Consolidated Time Grouping** - Single "Group By" dropdown in filter panel for V2 mode
+- **V2-Aware Sidebar** - EarthquakeSummary and CacheStatusPanel show appropriate messages
 
 ### Changed
 - Chart components internally detect mode based on which props are provided
 - Internal time grouping state used in V1 mode, external control in V2 mode
 - Top bar chart now uses `chartData.dailyCounts` in V2 mode
+- Auto-refresh disabled in V2 mode (server handles data freshness)
+- Per-chart time grouping buttons hidden in V2 mode (use filter panel instead)
+
+### Fixed
+- **60-Second Chart Delay** - Disabled `useAutoRefresh` hook in V2 mode that was causing V1 fetch attempts
+- **Infinite Re-render Loop** - Memoized `dateRange` calculation to prevent new Date objects on every render
+- **Unstable useCallback Dependencies** - Changed `useChartData` to use string dates instead of Date objects for stable comparison
+- **ChartFilters Syntax Error** - Removed duplicate JSX closing tags
 
 ### How V2 Mode Works
 Set `VITE_USE_API=true` in environment (already set in docker-compose.dev.yml):
@@ -34,6 +46,7 @@ Set `VITE_USE_API=true` in environment (already set in docker-compose.dev.yml):
 2. `useChartData` hook fetches aggregated data from `/api/charts/*` endpoints
 3. Charts receive `aggregatedData` prop and skip client-side aggregation
 4. Single grouping state shared across all charts for efficiency
+5. Auto-refresh disabled - server handles data freshness via USGS sync
 
 ---
 

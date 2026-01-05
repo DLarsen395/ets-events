@@ -7,12 +7,14 @@ import { format, subYears } from 'date-fns';
 import { useEarthquakeStore } from '../../stores/earthquakeStore';
 import { useCacheStore } from '../../stores/cacheStore';
 import { AutoRefreshIndicator } from './AutoRefreshIndicator';
+import { useIsApiMode } from './useChartData';
 import {
   MIN_MAGNITUDE_OPTIONS,
   MAX_MAGNITUDE_OPTIONS,
   TIME_RANGE_OPTIONS,
   REGION_SCOPE_OPTIONS,
 } from '../../types/earthquake';
+import { TIME_GROUPING_OPTIONS, type TimeGrouping } from './magnitudeDistributionUtils';
 
 const selectStyle: React.CSSProperties = {
   padding: '0.5rem 0.75rem',
@@ -49,9 +51,19 @@ interface ChartFiltersProps {
   isAutoRefreshing?: boolean;
   /** Number of new events found by auto-refresh */
   newEventsFound?: number;
+  /** Current time grouping for charts */
+  chartGrouping?: TimeGrouping;
+  /** Callback to change time grouping */
+  onChartGroupingChange?: (grouping: TimeGrouping) => void;
 }
 
-export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: ChartFiltersProps) {
+export function ChartFilters({
+  isAutoRefreshing = false,
+  newEventsFound = 0,
+  chartGrouping = 'day',
+  onChartGroupingChange,
+}: ChartFiltersProps) {
+  const isApiMode = useIsApiMode();
   const {
     minMagnitude,
     maxMagnitude,
@@ -250,6 +262,27 @@ export function ChartFilters({ isAutoRefreshing = false, newEventsFound = 0 }: C
           ))}
         </select>
       </div>
+
+      {/* Chart Grouping - shown in V2 API mode */}
+      {isApiMode && onChartGroupingChange && (
+        <div>
+          <label htmlFor="chart-grouping-select" style={labelStyle}>Group By</label>
+          <select
+            id="chart-grouping-select"
+            name="chartGrouping"
+            title="Time period grouping for charts"
+            value={chartGrouping}
+            onChange={(e) => onChartGroupingChange(e.target.value as TimeGrouping)}
+            style={selectStyle}
+          >
+            {TIME_GROUPING_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Spacer to push auto-refresh indicator to the right */}
       <div style={{ flex: 1 }} />

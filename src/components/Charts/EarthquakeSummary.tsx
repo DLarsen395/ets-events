@@ -118,7 +118,7 @@ export function EarthquakeSummary() {
       >
         Summary Statistics
       </h3>
-      
+
       <div
         style={{
           display: 'grid',
@@ -130,21 +130,21 @@ export function EarthquakeSummary() {
           <div style={valueStyle}>{summary.total.toLocaleString()}</div>
           <div style={labelStyle}>Total Events</div>
         </div>
-        
+
         <div style={statStyle}>
           <div style={{ ...valueStyle, color: '#fbbf24' }}>
             M{summary.maxMagnitude.toFixed(1)}
           </div>
           <div style={labelStyle}>Max Magnitude</div>
         </div>
-        
+
         <div style={statStyle}>
           <div style={{ ...valueStyle, color: '#60a5fa' }}>
             M{summary.avgMagnitude.toFixed(1)}
           </div>
           <div style={labelStyle}>Avg Magnitude</div>
         </div>
-        
+
         <div style={statStyle}>
           <div style={valueStyle}>
             {summary.avgDepth.toFixed(1)}km
