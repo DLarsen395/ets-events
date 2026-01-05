@@ -175,7 +175,7 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
         endDate: Type.Optional(Type.String({ format: 'date' })),
         minMagnitude: Type.Optional(Type.Number({ minimum: -2, maximum: 10, default: 2.5 })),
         chunkDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90, default: 30 })),
-        delayMs: Type.Optional(Type.Number({ minimum: 1000, maximum: 30000, default: 2000 })),
+        delayMs: Type.Optional(Type.Number({ minimum: 500, maximum: 30000, default: 2000 })),
       }),
     },
   }, async (request, reply) => {

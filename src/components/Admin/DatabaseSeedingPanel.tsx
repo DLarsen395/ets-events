@@ -33,13 +33,13 @@ interface SpeedPreset {
 const SPEED_PRESETS: SpeedPreset[] = [
   {
     name: 'Slow',
-    description: 'Best for limited bandwidth (5s delay, 15-day chunks)',
+    description: 'Limited bandwidth (5s delay, 15-day chunks)',
     delayMs: 5000,
     chunkDays: 15,
   },
   {
     name: 'Medium',
-    description: 'Balanced speed and bandwidth (2s delay, 30-day chunks)',
+    description: 'Balanced (2s delay, 30-day chunks)',
     delayMs: 2000,
     chunkDays: 30,
   },
@@ -51,7 +51,7 @@ const SPEED_PRESETS: SpeedPreset[] = [
   },
   {
     name: 'Turbo',
-    description: 'Excellent connection (500ms delay, 60-day chunks)',
+    description: 'Fast connection (0.5s delay, 60-day chunks)',
     delayMs: 500,
     chunkDays: 60,
   },
