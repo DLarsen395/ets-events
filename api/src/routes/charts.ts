@@ -206,4 +206,134 @@ export async function chartRoutes(app: FastifyInstance): Promise<void> {
       },
     };
   });
+
+  /**
+   * GET /api/charts/summary
+   * Returns summary statistics for the selected date range and filters
+   */
+  app.get('/summary', {
+    schema: {
+      querystring: ChartQuerySchema,
+    },
+  }, async (request) => {
+    const { startDate, endDate, minMagnitude = -2, maxMagnitude } = request.query as {
+      startDate: string;
+      endDate: string;
+      minMagnitude?: number;
+      maxMagnitude?: number;
+    };
+
+    const db = getDb();
+
+    // Build base query with filters
+    let query = db
+      .selectFrom('earthquakes')
+      .where('time', '>=', new Date(startDate))
+      .where('time', '<=', new Date(endDate))
+      .where('magnitude', '>=', minMagnitude);
+
+    if (maxMagnitude !== undefined) {
+      query = query.where('magnitude', '<=', maxMagnitude);
+    }
+
+    // Note: regionScope filtering would require US bounding box - future implementation
+
+    // Basic statistics
+    const basicStats = await query
+      .select(({ fn }) => [
+        fn.count('id').as('totalEvents'),
+        fn.avg('magnitude').as('avgMagnitude'),
+        fn.max('magnitude').as('maxMagnitude'),
+        fn.min('magnitude').as('minMagnitude'),
+        fn.avg('depth_km').as('avgDepth'),
+        fn.max('depth_km').as('maxDepth'),
+      ])
+      .executeTakeFirst();
+
+    // Largest earthquake in range
+    const largestEq = await query
+      .select(['source_event_id', 'time', 'magnitude', 'place'])
+      .orderBy('magnitude', 'desc')
+      .limit(1)
+      .executeTakeFirst();
+
+    // Most recent earthquake
+    const mostRecent = await query
+      .select(['source_event_id', 'time', 'magnitude', 'place'])
+      .orderBy('time', 'desc')
+      .limit(1)
+      .executeTakeFirst();
+
+    // Significant events (M5+) count
+    const significantCount = await query
+      .select(({ fn }) => fn.count('id').as('count'))
+      .where('magnitude', '>=', 5)
+      .executeTakeFirst();
+
+    // Major events (M6+) count
+    const majorCount = await query
+      .select(({ fn }) => fn.count('id').as('count'))
+      .where('magnitude', '>=', 6)
+      .executeTakeFirst();
+
+    // Total energy released (in Joules using Gutenberg-Richter)
+    const energyStats = await query
+      .select([
+        sql<number>`SUM(POWER(10, 1.5 * magnitude + 4.8))`.as('totalEnergy'),
+      ])
+      .executeTakeFirst();
+
+    // Events per day average
+    const daysDiff = Math.max(1, Math.ceil(
+      (new Date(endDate).getTime() - new Date(startDate).getTime()) / (24 * 60 * 60 * 1000)
+    ));
+    const eventsPerDay = Number(basicStats?.totalEvents || 0) / daysDiff;
+
+    return {
+      success: true,
+      data: {
+        totalEvents: Number(basicStats?.totalEvents || 0),
+        avgMagnitude: basicStats?.avgMagnitude
+          ? Number(Number(basicStats.avgMagnitude).toFixed(2))
+          : null,
+        maxMagnitude: basicStats?.maxMagnitude
+          ? Number(basicStats.maxMagnitude)
+          : null,
+        minMagnitude: basicStats?.minMagnitude
+          ? Number(basicStats.minMagnitude)
+          : null,
+        avgDepth: basicStats?.avgDepth
+          ? Number(Number(basicStats.avgDepth).toFixed(1))
+          : null,
+        maxDepth: basicStats?.maxDepth
+          ? Number(basicStats.maxDepth)
+          : null,
+        significantEvents: Number(significantCount?.count || 0),
+        majorEvents: Number(majorCount?.count || 0),
+        totalEnergyJoules: energyStats?.totalEnergy
+          ? Number(energyStats.totalEnergy)
+          : 0,
+        eventsPerDay: Number(eventsPerDay.toFixed(1)),
+        largestEvent: largestEq ? {
+          id: largestEq.source_event_id,
+          time: largestEq.time,
+          magnitude: largestEq.magnitude,
+          place: largestEq.place,
+        } : null,
+        mostRecentEvent: mostRecent ? {
+          id: mostRecent.source_event_id,
+          time: mostRecent.time,
+          magnitude: mostRecent.magnitude,
+          place: mostRecent.place,
+        } : null,
+      },
+      meta: {
+        startDate,
+        endDate,
+        minMagnitude,
+        maxMagnitude,
+        daysInRange: daysDiff,
+      },
+    };
+  });
 }

@@ -338,7 +338,7 @@ export function EarthquakeChartsPage() {
           overflowY: 'auto',
         }}
       >
-        <EarthquakeSummary />
+        <EarthquakeSummary apiStats={chartData.summaryStats} />
 
         {/* Cache Status Panel */}
         <CacheStatusPanel />

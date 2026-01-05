@@ -102,6 +102,34 @@ export interface ApiEnergyRelease {
 }
 
 /**
+ * Summary statistics from API
+ */
+export interface ApiSummaryStats {
+  totalEvents: number;
+  avgMagnitude: number | null;
+  maxMagnitude: number | null;
+  minMagnitude: number | null;
+  avgDepth: number | null;
+  maxDepth: number | null;
+  significantEvents: number; // M5+
+  majorEvents: number; // M6+
+  totalEnergyJoules: number;
+  eventsPerDay: number;
+  largestEvent: {
+    id: string;
+    time: string;
+    magnitude: number;
+    place: string | null;
+  } | null;
+  mostRecentEvent: {
+    id: string;
+    time: string;
+    magnitude: number;
+    place: string | null;
+  } | null;
+}
+
+/**
  * Query parameters for earthquakes endpoint
  */
 export interface EarthquakeQueryParams {
@@ -198,6 +226,15 @@ export async function fetchEnergyRelease(
   params: ChartQueryParams
 ): Promise<ApiResponse<ApiEnergyRelease[]>> {
   return apiFetch('/api/charts/energy-release', params as unknown as Record<string, string | number | undefined>);
+}
+
+/**
+ * Fetch summary statistics for charts sidebar
+ */
+export async function fetchSummaryStats(
+  params: ChartQueryParams
+): Promise<ApiResponse<ApiSummaryStats>> {
+  return apiFetch('/api/charts/summary', params as unknown as Record<string, string | number | undefined>);
 }
 
 // =============================================================================

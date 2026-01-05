@@ -13,9 +13,11 @@ import {
   fetchDailyCounts,
   fetchMagnitudeDistribution,
   fetchEnergyRelease,
+  fetchSummaryStats,
   type ApiDailyCount,
   type ApiMagnitudeDistribution,
   type ApiEnergyRelease,
+  type ApiSummaryStats,
   type ChartQueryParams,
 } from '../../services/api';
 import type { TimeGrouping, MagnitudeTimeDataPoint, EnergyDataPoint } from './magnitudeDistributionUtils';
@@ -40,6 +42,7 @@ interface ChartData {
   dailyCounts: DailyEarthquakeAggregate[];
   magnitudeDistribution: MagnitudeTimeDataPoint[];
   energyRelease: EnergyDataPoint[];
+  summaryStats: ApiSummaryStats | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -170,6 +173,7 @@ export function useChartData(options: UseChartDataOptions): ChartData {
   const [apiDailyCounts, setApiDailyCounts] = useState<DailyEarthquakeAggregate[]>([]);
   const [apiMagDist, setApiMagDist] = useState<MagnitudeTimeDataPoint[]>([]);
   const [apiEnergy, setApiEnergy] = useState<EnergyDataPoint[]>([]);
+  const [apiSummary, setApiSummary] = useState<ApiSummaryStats | null>(null);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -205,11 +209,12 @@ export function useChartData(options: UseChartDataOptions): ChartData {
     };
 
     try {
-      // Fetch all chart data in parallel
-      const [dailyRes, magRes, energyRes] = await Promise.all([
+      // Fetch all chart data in parallel (including summary stats)
+      const [dailyRes, magRes, energyRes, summaryRes] = await Promise.all([
         fetchDailyCounts(params),
         fetchMagnitudeDistribution(params),
         fetchEnergyRelease({ ...params, minMagnitude: Math.max(minMagnitude, 2.5) }),
+        fetchSummaryStats(params),
       ]);
 
       if (dailyRes.success && dailyRes.data) {
@@ -222,6 +227,10 @@ export function useChartData(options: UseChartDataOptions): ChartData {
 
       if (energyRes.success && energyRes.data) {
         setApiEnergy(apiEnergyToChartData(energyRes.data, timeGrouping));
+      }
+
+      if (summaryRes.success && summaryRes.data) {
+        setApiSummary(summaryRes.data);
       }
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Failed to fetch chart data');
@@ -265,6 +274,7 @@ export function useChartData(options: UseChartDataOptions): ChartData {
       dailyCounts: apiDailyCounts,
       magnitudeDistribution: apiMagDist,
       energyRelease: apiEnergy,
+      summaryStats: apiSummary,
       isLoading: isLoadingApi,
       error: apiError,
     };
@@ -274,6 +284,7 @@ export function useChartData(options: UseChartDataOptions): ChartData {
     dailyCounts: localDailyCounts,
     magnitudeDistribution: localMagDist,
     energyRelease: localEnergy,
+    summaryStats: null, // V1 mode doesn't have summary stats (computed locally if needed)
     isLoading: storeLoading,
     error: storeError,
   };

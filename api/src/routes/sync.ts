@@ -1,11 +1,19 @@
 /**
- * Sync status and trigger endpoints
+ * Sync status, trigger, and seeding endpoints
  */
 
 import type { FastifyInstance } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import { getDb } from '../db/index.js';
+import { config } from '../config/index.js';
 import { triggerManualSync } from '../jobs/sync-scheduler.js';
+import {
+  seedDatabase,
+  getSeedingProgress,
+  isSeedingInProgress,
+  getDatabaseCoverage,
+  cancelSeeding,
+} from '../services/seeding.js';
 
 export async function syncRoutes(app: FastifyInstance): Promise<void> {
   /**
@@ -64,8 +72,15 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
   /**
    * POST /api/sync/trigger
    * Manually trigger a sync for a specific date range
+   * Rate limited more aggressively to prevent abuse
    */
   app.post('/trigger', {
+    config: {
+      rateLimit: {
+        max: config.rateLimit.syncMax,
+        timeWindow: config.rateLimit.syncWindowMs,
+      },
+    },
     schema: {
       body: Type.Object({
         startDate: Type.String({ format: 'date' }),
@@ -127,6 +142,107 @@ export async function syncRoutes(app: FastifyInstance): Promise<void> {
         error: h.error_message,
         createdAt: h.created_at,
       })),
+    };
+  });
+
+  /**
+   * GET /api/sync/coverage
+   * Returns database coverage statistics (what data is already seeded)
+   */
+  app.get('/coverage', async () => {
+    const coverage = await getDatabaseCoverage();
+    return {
+      success: true,
+      data: coverage,
+    };
+  });
+
+  /**
+   * POST /api/sync/seed
+   * Start controlled database seeding with rate limiting
+   * This will fetch historical data in chunks with delays to avoid hammering USGS
+   */
+  app.post('/seed', {
+    config: {
+      rateLimit: {
+        max: 1, // Only 1 seeding request at a time
+        timeWindow: 60000, // 1 minute
+      },
+    },
+    schema: {
+      body: Type.Object({
+        startDate: Type.Optional(Type.String({ format: 'date' })),
+        endDate: Type.Optional(Type.String({ format: 'date' })),
+        minMagnitude: Type.Optional(Type.Number({ minimum: -2, maximum: 10, default: 2.5 })),
+        chunkDays: Type.Optional(Type.Number({ minimum: 1, maximum: 90, default: 30 })),
+        delayMs: Type.Optional(Type.Number({ minimum: 1000, maximum: 30000, default: 2000 })),
+      }),
+    },
+  }, async (request, reply) => {
+    if (isSeedingInProgress()) {
+      return reply.conflict('Seeding already in progress. Check /api/sync/seed/progress for status.');
+    }
+
+    const {
+      startDate,
+      endDate,
+      minMagnitude = 2.5,
+      chunkDays = 30,
+      delayMs = 2000,
+    } = request.body as {
+      startDate?: string;
+      endDate?: string;
+      minMagnitude?: number;
+      chunkDays?: number;
+      delayMs?: number;
+    };
+
+    // Start seeding in background (don't await)
+    seedDatabase({
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      minMagnitude,
+      chunkDays,
+      delayMs,
+    }).catch((err) => {
+      console.error('[Seeding] Unhandled error:', err);
+    });
+
+    return {
+      success: true,
+      message: 'Seeding started. Check /api/sync/seed/progress for status.',
+      data: {
+        startDate: startDate || '1 year ago',
+        endDate: endDate || 'now',
+        minMagnitude,
+        chunkDays,
+        delayMs,
+      },
+    };
+  });
+
+  /**
+   * GET /api/sync/seed/progress
+   * Get current seeding progress
+   */
+  app.get('/seed/progress', async () => {
+    const progress = getSeedingProgress();
+    return {
+      success: true,
+      data: progress,
+    };
+  });
+
+  /**
+   * POST /api/sync/seed/cancel
+   * Cancel ongoing seeding (will finish current chunk)
+   */
+  app.post('/seed/cancel', async () => {
+    cancelSeeding();
+    return {
+      success: true,
+      message: 'Seeding cancellation requested. Current chunk will complete.',
+      data: getSeedingProgress(),
     };
   });
 }

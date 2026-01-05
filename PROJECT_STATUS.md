@@ -1,11 +1,11 @@
 # SeismiStats Visualization - Project Status
 
-**Last Updated**: January 4, 2026
-**Version**: 2.0.0-alpha.2
+**Last Updated**: January 5, 2026
+**Version**: 2.0.0-alpha.4
 
-## 📊 Current Status: V2.0.0-alpha.2 - Chart Integration Complete
+## 📊 Current Status: V2.0.0-alpha.4 - Security Hardening & Seeding
 
-V2 backend complete. Frontend charts fully integrated with V2 API mode. All core functionality working.
+V2 backend with security hardening, rate limiting, and controlled database seeding. Production-ready security measures.
 
 ### ✅ V1 Phases Complete (100%)
 - Phase 1: Core Visualization ✅
@@ -22,6 +22,8 @@ V2 backend complete. Frontend charts fully integrated with V2 API mode. All core
 - Phase 4: USGS Sync Service ✅ (Scheduled + manual)
 - Phase 5: Chart Endpoints ✅ (Daily counts, magnitude distribution, energy release)
 - Phase 6: Frontend Integration ✅ (Charts fully support V2 mode)
+- Phase 7: Security Hardening ✅ (Helmet, rate limiting, env validation)
+- Phase 8: Database Seeding ✅ (Controlled historical data population)
 
 ---
 

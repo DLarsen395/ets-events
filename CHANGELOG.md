@@ -5,7 +5,47 @@ All notable changes to the SeismiStats Visualization project will be documented 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - V2 Frontend Chart Integration
+## [Unreleased] - V2 Security Hardening & Seeding
+
+### 🔒 Security Hardening
+
+Production-ready security measures and controlled database population.
+
+### Added
+- **Security Middleware**:
+  - `@fastify/helmet` - Secure HTTP headers (CSP, HSTS, etc.)
+  - `@fastify/rate-limit` - Request throttling (100/min general, 5/5-min sync)
+  - Explicit body limit (100KB) to prevent large payload attacks
+- **Production Environment Validation** - API fails fast if missing required env vars
+- **Database Seeding Service** (`api/src/services/seeding.ts`):
+  - Chunked fetching (30-day chunks by default)
+  - 2-second delay between USGS API requests
+  - Progress tracking with event counts
+  - Cancellation support
+- **Seeding API Endpoints**:
+  - `POST /api/sync/seed` - Start controlled seeding with date range
+  - `GET /api/sync/seed/progress` - Check seeding progress
+  - `POST /api/sync/seed/cancel` - Cancel in-progress seeding
+  - `GET /api/sync/coverage` - View database date coverage
+- **Summary Statistics Endpoint** (`GET /api/charts/summary`):
+  - Total events, avg/max/min magnitude
+  - Significant events (M5+), Major events (M6+)
+  - Events per day rate, largest event details
+- **Frontend Summary Stats** - EarthquakeSummary displays V2 API statistics
+
+### Changed
+- CORS origin now parsed from comma-separated env var
+- Rate limits configurable via environment variables
+- EarthquakeSummary component completely rewritten for V2 mode
+
+### Security Notes
+- Seeding endpoint has aggressive rate limit (1 request/minute)
+- Sync endpoints have reduced rate limit (5 requests/5 minutes)
+- Production mode requires `DATABASE_URL` and `CORS_ORIGIN` env vars
+
+---
+
+## [2.0.0-alpha.3] - 2026-01-05
 
 ### 🔗 Chart Components V2 Integration
 
